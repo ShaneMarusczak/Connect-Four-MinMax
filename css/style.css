@@ -41,7 +41,6 @@ h1 {
 #gameBoard {
 	overflow: hidden;
 	background-color: blue;
-	/* border-collapse: collapse; */
 }
 
 #coinfeld {
@@ -174,7 +173,7 @@ h1 {
 
 #debug {
 	margin-top: 10px;
-	font-size: 11px;
+	font-size: 13px;
 }
 
 .box-right {
@@ -213,17 +212,6 @@ input {
 .save:hover,
 .save:active {
 	background: #dadada;
-}
-
-#loading {
-	display: none;
-	position: absolute;
-	top: 10px;
-	left: 10px;
-	font-size: 10px;
-	background: #DC143C;
-	color: #fff;
-	padding: 4px;
 }
 
 p {
@@ -367,6 +355,48 @@ select {
 	border-radius: 90px;
 	width: 100px !important;
 	height: 100px !important;
-	margin-right: 10px;
-	margin-left: 10px;
+	margin-right: 5px;
+}
+
+@keyframes gbounce {
+	0% {
+		transform: translateY(15px);
+	}
+
+	50% {
+		transform: translateY(-15px);
+	}
+
+	100% {
+		transform: translateY(15px);
+	}
+}
+
+
+@keyframes glow {
+	0% {
+		background-color: #333;
+	}
+
+	50% {
+		background-color: cornsilk;
+	}
+
+	100% {
+		background-color: #333;
+	}
+}
+
+.bounce {
+	animation-name: gbounce;
+	animation-duration: 2.5s;
+	animation-iteration-count: infinite;
+	background-color: #333;
+}
+
+.glow {
+	animation-name: glow;
+	animation-duration: 2.5s;
+	animation-iteration-count: infinite;
+	background-color: #333;
 }

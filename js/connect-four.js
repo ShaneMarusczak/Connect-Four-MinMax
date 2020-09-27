@@ -3,6 +3,7 @@
 /*eslint-disable strict */
 (() => {
 	let gameStarted = false;
+	let gameOver = false;
 
 	class Board {
 		constructor(game, field, player) {
@@ -153,6 +154,8 @@
 					td[i].addEventListener("click", (e) => {
 						this.act(e);
 					}, false);
+					td[i].addEventListener("mouseover", hoverOverCollumnHighLight);
+					td[i].addEventListener("mouseleave", hoverOverCollumnHighLightReset);
 				} else if (td[i].attachEvent) {
 					td[i].attachEvent("click", this.act);
 				}
@@ -160,7 +163,7 @@
 		}
 
 		act(e) {
-			if (gameStarted) {
+			if (gameStarted && !gameOver) {
 				const element = e.target || window.event.srcElement;
 				if (this.round == 0) this.place(element.cellIndex);
 				if (this.round == 1) this.generateComputerDecision();
@@ -188,7 +191,7 @@
 		place(column) {
 			if (this.board.score() != this.score && this.board.score() != -this.score && !this.board.isFull()) {
 				for (let y = this.rows - 1; y >= 0; y--) {
-					if (document.getElementById("gameBoard").rows[y].cells[column].className == "empty") {
+					if (document.getElementById("gameBoard").rows[y].cells[column].classList.contains("empty")) {
 						if (this.round == 1) {
 							Game.animateDrop({
 								"inputCol": column,
@@ -206,6 +209,9 @@
 							});
 							window.sleep(y * 125).then(() => {
 								document.getElementById("gameBoard").rows[y].cells[column].className = "coin human-coin";
+								if (!gameOver) {
+									window.sleep(200).then(() => window.modalOpen("Thinking..."));
+								}
 							});
 						}
 						break;
@@ -224,12 +230,12 @@
 			if (this.board.score() != this.score && this.board.score() != -this.score && !this.board.isFull()) {
 				this.iterations = 0;
 				setTimeout(() => {
-					// window.modal("Thinking...", 1000);
 					const aiMove = this.maximizePlay(this.board, this.depth);
-					sleep(1100).then(() => {
-						this.place(aiMove[0]);
+					window.sleep(700).then(() => {
+						window.modalClose();
+						window.sleep(300).then(() => this.place(aiMove[0]));
 					});
-				}, 10);
+				}, 800);
 			}
 		}
 
@@ -275,18 +281,21 @@
 
 		updateStatus() {
 			if (this.board.score() == -this.score) {
+				gameOver = true;
 				this.status = 1;
-				this.markWin();
-				alert("You have won!");
+				window.modal("You Win!", 2000);
+				window.sleep(1000).then(() => this.markWin());
 			}
 			if (this.board.score() == this.score) {
+				gameOver = true;
 				this.status = 2;
-				alert("You have lost!");
+				window.modal("You Lose!", 2000);
 				window.sleep(1000).then(() => this.markWin());
 			}
 			if (this.board.isFull()) {
+				gameOver = true;
 				this.status = 3;
-				alert("Tie!");
+				window.modal("Draw!", 2000);
 			}
 			const html = document.getElementById("status");
 			if (this.status == 0) {
@@ -313,6 +322,28 @@
 		}
 	}
 
+	function hoverOverCollumnHighLight(e) {
+		const col = Number(e.target.id.substring(3));
+		document.getElementById("fc" + col).classList.add("bounce");
+		for (let y = 5; y >= 0; y--) {
+			if (document.getElementById("td" + y + col).classList.contains("empty")) {
+				document.getElementById("td" + y + col).classList.add("glow");
+				break;
+			}
+		}
+	}
+
+	function hoverOverCollumnHighLightReset(e) {
+		const col = Number(e.target.id.substring(3));
+		document.getElementById("fc" + col).classList.remove("bounce");
+		for (let y = 5; y >= 0; y--) {
+			if (document.getElementById("td" + y + col).classList.contains("empty")) {
+				document.getElementById("td" + y + col).classList.remove("glow");
+				break;
+			}
+		}
+	}
+
 	function start() {
 		gameStarted = true;
 		window.Game = new Game(document.getElementById("difficulty").options[difficulty.selectedIndex].value);
@@ -321,11 +352,17 @@
 	(() => {
 		document.getElementById("start").addEventListener("click", start);
 
+		for (let i = 0; i < 7; i++) {
+			const circle = document.createElement("div");
+			circle.id = "fc" + i;
+			circle.classList.add("floatingCircle");
+			document.getElementById("floatingCircles").appendChild(circle);
+		}
+
 
 		for (let i = 0; i < 6; i++) {
 			const tableRow = document.createElement("tr");
 			for (let j = 0; j < 7; j++) {
-				const backGround = document.createElement("div");
 				const tableData = document.createElement("td");
 				tableData.className = "empty";
 				tableData.id = "td" + i + j;
@@ -333,10 +370,6 @@
 			}
 			document.getElementById("gameBoard").appendChild(tableRow);
 		}
-
-
 	})();
-
-
 })();
 
