@@ -174,7 +174,10 @@
 		}
 
 		static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
-			if (currentRow === inputRow) return;
+			if (currentRow === inputRow) {
+
+				return;
+			}
 			document.getElementById("td" + currentRow + inputCol).classList.add("coin");
 			document.getElementById("td" + currentRow + inputCol).classList.add(moveTurn ? "cpu-coin" : "human-coin");
 			window.sleep(120).then(() => {
@@ -215,9 +218,7 @@
 							});
 							window.sleep(y * 125).then(() => {
 								document.getElementById("gameBoard").rows[y].cells[column].className = "coin human-coin";
-								if (!gameOver) {
-									window.sleep(200).then(() => window.modalOpen("Thinking..."));
-								}
+
 							});
 						}
 						break;
@@ -234,6 +235,9 @@
 
 		generateComputerDecision() {
 			if (this.board.score() != this.score && this.board.score() != -this.score && !this.board.isFull()) {
+				if (!gameOver) {
+					window.modalOpen("Thinking...");
+				}
 				this.iterations = 0;
 				setTimeout(() => {
 					const aiMove = this.maximizePlay(this.board, this.depth);
@@ -319,12 +323,14 @@
 	}
 
 	function hoverOverCollumnHighLight(e) {
-		const col = Number(e.target.id.substring(3));
-		document.getElementById("fc" + col).classList.add("bounce");
-		for (let y = 5; y >= 0; y--) {
-			if (document.getElementById("td" + y + col).classList.contains("empty")) {
-				document.getElementById("td" + y + col).classList.add("glow");
-				break;
+		if (!gameOver) {
+			const col = Number(e.target.id.substring(3));
+			document.getElementById("fc" + col).classList.add("bounce");
+			for (let y = 5; y >= 0; y--) {
+				if (document.getElementById("td" + y + col).classList.contains("empty")) {
+					document.getElementById("td" + y + col).classList.add("glow");
+					break;
+				}
 			}
 		}
 	}
