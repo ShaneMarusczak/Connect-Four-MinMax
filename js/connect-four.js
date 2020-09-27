@@ -1,6 +1,5 @@
 /*eslint-disable max-classes-per-file */
-/*eslint-disable no-undef */
-/*eslint-disable strict */
+"use strict";
 (() => {
 	let gameStarted = false;
 	let gameOver = false;
@@ -150,18 +149,13 @@
 				}
 			}
 			this.board = new Board(this, gameBoard, 0);
-			const td = document.getElementById("gameBoard").getElementsByTagName("td");
-			for (let i = 0; i < td.length; i++) {
-				if (td[i].addEventListener) {
-					td[i].addEventListener("click", (e) => {
-						this.act(e);
-					}, false);
-					td[i].addEventListener("mouseover", hoverOverCollumnHighLight);
-					td[i].addEventListener("mouseleave", hoverOverCollumnHighLightReset);
-				} else if (td[i].attachEvent) {
-					td[i].attachEvent("click", this.act);
-				}
-			}
+			Array.from(document.getElementById("gameBoard").getElementsByTagName("td")).forEach(td => {
+				td.addEventListener("click", (e) => {
+					this.act(e);
+				}, false);
+				td.addEventListener("mouseover", hoverOverCollumnHighLight);
+				td.addEventListener("mouseleave", hoverOverCollumnHighLightReset);
+			});
 		}
 
 		act(e) {
@@ -174,10 +168,7 @@
 		}
 
 		static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
-			if (currentRow === inputRow) {
-
-				return;
-			}
+			if (currentRow === inputRow) return;
 			document.getElementById("td" + currentRow + inputCol).classList.add("coin");
 			document.getElementById("td" + currentRow + inputCol).classList.add(moveTurn ? "cpu-coin" : "human-coin");
 			window.sleep(120).then(() => {
@@ -349,7 +340,7 @@
 
 	function start() {
 		gameStarted = true;
-		window.Game = new Game(document.getElementById("difficulty").options[difficulty.selectedIndex].value);
+		window.Game = new Game(Array.from(document.getElementById("difficulty").options).find(d => d.selected).value);
 	}
 
 	(() => {
@@ -362,16 +353,15 @@
 			document.getElementById("floatingCircles").appendChild(circle);
 		}
 
-
 		for (let i = 0; i < 6; i++) {
 			const tableRow = document.createElement("tr");
+			document.getElementById("gameBoard").appendChild(tableRow);
 			for (let j = 0; j < 7; j++) {
 				const tableData = document.createElement("td");
 				tableData.className = "empty";
 				tableData.id = "td" + i + j;
 				tableRow.appendChild(tableData);
 			}
-			document.getElementById("gameBoard").appendChild(tableRow);
 		}
 	})();
 })();
