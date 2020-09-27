@@ -5,9 +5,9 @@
 	let gameOver = false;
 
 	class Board {
-		constructor(game, field, player) {
+		constructor(game, fieldOfPlay, player) {
 			this.game = game;
-			this.field = field;
+			this.fieldOfPlay = fieldOfPlay;
 			this.player = player;
 		}
 
@@ -19,11 +19,11 @@
 		}
 
 		place(column) {
-			if (this.field[0][column] === null && column >= 0 && column < this.game.columns) {
+			if (this.fieldOfPlay[0][column] === null && column >= 0 && column < this.game.columns) {
 
 				for (let y = this.game.rows - 1; y >= 0; y--) {
-					if (this.field[y][column] === null) {
-						this.field[y][column] = this.player;
+					if (this.fieldOfPlay[y][column] === null) {
+						this.fieldOfPlay[y][column] = this.player;
 						break;
 					}
 				}
@@ -43,10 +43,10 @@
 			this.game.winningArrayCpu = [];
 
 			for (let i = 0; i < 4; i++) {
-				if (this.field[internalRow][internalCol] == 0) {
+				if (this.fieldOfPlay[internalRow][internalCol] == 0) {
 					this.game.winningArrayHuman.push([internalRow, internalCol]);
 					humanPoints++;
-				} else if (this.field[internalRow][internalCol] == 1) {
+				} else if (this.fieldOfPlay[internalRow][internalCol] == 1) {
 					this.game.winningArrayCpu.push([internalRow, internalCol]);
 					computerPoints++;
 				}
@@ -54,10 +54,10 @@
 				internalCol = internalCol + deltaX;
 			}
 			if (humanPoints == 4) {
-				this.game.winningArray = this.game.winningArrayHuman;
+				this.game.winners = this.game.winningArrayHuman;
 				return -this.game.score;
 			} else if (computerPoints == 4) {
-				this.game.winningArray = this.game.winningArrayCpu;
+				this.game.winners = this.game.winningArrayCpu;
 				return this.game.score;
 			} else {
 				return computerPoints;
@@ -108,17 +108,17 @@
 
 		isFull() {
 			for (let i = 0; i < this.game.columns; i++) {
-				if (this.field[0][i] === null) {
+				if (this.fieldOfPlay[0][i] === null) {
 					return false;
 				}
 			}
 			return true;
 		}
 
-		copy() {
+		getBoardCopy() {
 			const newBoard = [];
-			for (let i = 0; i < this.field.length; i++) {
-				newBoard.push(this.field[i].slice());
+			for (let i = 0; i < this.fieldOfPlay.length; i++) {
+				newBoard.push(this.fieldOfPlay[i].slice());
 			}
 			return new Board(this.game, newBoard, this.player);
 		}
@@ -129,11 +129,10 @@
 		constructor(depth) {
 			this.rows = 6;
 			this.columns = 7;
-			this.status = 0;
 			this.depth = depth;
 			this.score = 100000;
 			this.round = 0;
-			this.winningArray = [];
+			this.winners = [];
 			this.iterations = 0;
 
 			this.init();
@@ -223,7 +222,7 @@
 					return alert("Invalid move!");
 				}
 				this.round = this.switchRound(this.round);
-				this.updateStatus();
+				this.checkGameOver();
 			}
 			return null;
 		}
@@ -232,7 +231,7 @@
 			if (this.board.score() != this.score && this.board.score() != -this.score && !this.board.isFull()) {
 				this.iterations = 0;
 				setTimeout(() => {
-					const aiMove = this.maximizePlay(this.board, this.depth);
+					const aiMove = this.maximize(this.board, this.depth);
 					window.sleep(700).then(() => {
 						window.modalClose();
 						window.sleep(300).then(() => this.place(aiMove[0]));
@@ -241,15 +240,15 @@
 			}
 		}
 
-		maximizePlay(board, depth) {
+		maximize(board, depth) {
 			const score = board.score();
 			if (board.isFinished(depth, score)) return [null, score];
 			const max = [null, -99999];
 			for (let column = 0; column < this.columns; column++) {
-				const newBoard = board.copy();
+				const newBoard = board.getBoardCopy();
 				if (newBoard.place(column)) {
 					this.iterations++;
-					const nextMove = this.minimizePlay(newBoard, depth - 1);
+					const nextMove = this.minimize(newBoard, depth - 1);
 					if (max[0] === null || nextMove[1] > max[1]) {
 						max[0] = column;
 						[, max[1]] = nextMove;
@@ -259,15 +258,15 @@
 			return max;
 		}
 
-		minimizePlay(board, depth) {
+		minimize(board, depth) {
 			const score = board.score();
 			if (board.isFinished(depth, score)) return [null, score];
 			const min = [null, 99999];
 			for (let column = 0; column < this.columns; column++) {
-				const newBoard = board.copy();
+				const newBoard = board.getBoardCopy();
 				if (newBoard.place(column)) {
 					this.iterations++;
-					const nextMove = this.maximizePlay(newBoard, depth - 1);
+					const nextMove = this.maximize(newBoard, depth - 1);
 					if (min[0] === null || nextMove[1] < min[1]) {
 						min[0] = column;
 						[, min[1]] = nextMove;
@@ -282,34 +281,31 @@
 			return round == 0 ? 1 : 0;
 		}
 
-		updateStatus() {
+		checkGameOver() {
 			if (this.board.score() == -this.score) {
 				gameOver = true;
-				this.status = 1;
 				window.modal("You Win!", 2000);
 				document.getElementById("uiBlocker").style.display = "none";
-				window.sleep(1000).then(() => this.markWin());
+				window.sleep(1000).then(() => this.winnersColorChange());
 			}
 			if (this.board.score() == this.score) {
 				gameOver = true;
-				this.status = 2;
 				window.modal("You Lose!", 2000);
 				document.getElementById("uiBlocker").style.display = "none";
-				window.sleep(1000).then(() => this.markWin());
+				window.sleep(1000).then(() => this.winnersColorChange());
 			}
 			if (this.board.isFull()) {
 				gameOver = true;
-				this.status = 3;
 				document.getElementById("uiBlocker").style.display = "none";
 				window.modal("Draw!", 2000);
 			}
 		}
 
-		markWin() {
+		winnersColorChange() {
 			document.getElementById("gameBoard").className = "finished";
-			for (let i = 0; i < this.winningArray.length; i++) {
-				const name = document.getElementById("gameBoard").rows[this.winningArray[i][0]].cells[this.winningArray[i][1]].className;
-				document.getElementById("gameBoard").rows[this.winningArray[i][0]].cells[this.winningArray[i][1]].className = name + " win";
+			for (let i = 0; i < this.winners.length; i++) {
+				const name = document.getElementById("gameBoard").rows[this.winners[i][0]].cells[this.winners[i][1]].className;
+				document.getElementById("gameBoard").rows[this.winners[i][0]].cells[this.winners[i][1]].className = name + " win";
 			}
 		}
 	}
