@@ -11,42 +11,41 @@
 	<link rel="stylesheet" href="css/style.css">
 	<link rel="stylesheet" type="text/css" href="https://marusczak.com/BuildingBlocks/css/modal.min.css" />
 </head>
+<div id="uiBlocker"></div>
 
 <body>
-	<a id="homeLink" href="https://marusczak.com/Games-Home-Page" rel="noreferrer"><img id="homeIcon"
-			src="house-icon.png"></a>
-	<a id="gitHubLink" href="https://github.com/ShaneMarusczak/Connect-Four-MinMax" target="_blank"
-		rel="noreferrer"><img id="githubicon" src="github-icon.jpg"></a>
-	<div id="container">
+	<header>
 		<h1 class="header-text">Connect Four</h1>
 
+		<a id="homeLink" href="https://marusczak.com/Games-Home-Page" rel="noreferrer"><img id="homeIcon"
+				src="house-icon.png"></a>
+		<a id="gitHubLink" href="https://github.com/ShaneMarusczak/Connect-Four-MinMax" target="_blank"
+			rel="noreferrer"><img id="githubicon" src="github-icon.jpg"></a>
+	</header>
+
+	<div id="container">
 		<div class="box-left">
 			<div id="floatingCircles"></div>
 			<table id="gameBoard" cellpadding="0"></table>
 		</div>
 
 		<div class="box-right">
-			<div id="options">
+			<div id="btns">
 				<p class="header">Difficulty</p>
-				<p>
-					<select id="difficulty" autocomplete="off">
-						<option value="1">Super Easy</option>
-						<option value="2">Very Easy</option>
-						<option value="3">Easy</option>
-						<option value="4" selected="selected">Average</option>
-						<option value="5">Slighty Difficult</option>
-						<option value="6">Moderately Difficult</option>
-						<option value="7">Very Difficult</option>
-					</select>
-				</p>
-				<p><button id="start" type="submit">Start Game</button></p>
-				<p><button id="restart" onclick="location.reload()" type="submit">Retart Game</button></p>
-			</div>
-
-			<div id="debug">
-				<p>Status: <span id="status" class="status-running">running</span></p>
+				<select id="difficulty" class="shadowBox" autocomplete="off">
+					<option value="1">1 (Easiest)</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4" selected="selected">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7 (Hardest - Slow)</option>
+				</select>
+				<button id="start" class="shadowBox" type="submit">Start</button>
+				<button id="restart" class="shadowBox" onclick="location.reload()" type="submit">Restart</button>
 			</div>
 		</div>
+		<p id="lastUpdate">Last Updated: September 27, 2020</p>
 	</div>
 	<script type="text/javascript" src="https://marusczak.com/BuildingBlocks/js/buildingBlocks.min.js"></script>
 	<script type="text/javascript" src="https://marusczak.com/BuildingBlocks/js/noTimeModal.min.js"></script>

@@ -38,19 +38,21 @@
 		scorePosition(row, column, deltaY, deltaX) {
 			let humanPoints = 0;
 			let computerPoints = 0;
+			let internalRow = row;
+			let internalCol = column;
 			this.game.winningArrayHuman = [];
 			this.game.winningArrayCpu = [];
 
 			for (let i = 0; i < 4; i++) {
-				if (this.field[row][column] == 0) {
-					this.game.winningArrayHuman.push([row, column]);
+				if (this.field[internalRow][internalCol] == 0) {
+					this.game.winningArrayHuman.push([internalRow, internalCol]);
 					humanPoints++;
-				} else if (this.field[row][column] == 1) {
-					this.game.winningArrayCpu.push([row, column]);
+				} else if (this.field[internalRow][internalCol] == 1) {
+					this.game.winningArrayCpu.push([internalRow, internalCol]);
 					computerPoints++;
 				}
-				row = row + deltaY;
-				column = column + deltaX;
+				internalRow = internalRow + deltaY;
+				internalCol = internalCol + deltaX;
 			}
 			if (humanPoints == 4) {
 				this.game.winningArray = this.game.winningArrayHuman;
@@ -164,6 +166,7 @@
 
 		act(e) {
 			if (gameStarted && !gameOver) {
+				document.getElementById("uiBlocker").style.display = "block";
 				const element = e.target || window.event.srcElement;
 				if (this.round == 0) this.place(element.cellIndex);
 				if (this.round == 1) this.generateComputerDecision();
@@ -200,6 +203,9 @@
 							});
 							window.sleep(y * 125).then(() => {
 								document.getElementById("gameBoard").rows[y].cells[column].className = "coin cpu-coin";
+								window.sleep(200).then(() => {
+									document.getElementById("uiBlocker").style.display = "none";
+								});
 							});
 						} else {
 							Game.animateDrop({
@@ -250,7 +256,7 @@
 					const nextMove = this.minimizePlay(newBoard, depth - 1);
 					if (max[0] === null || nextMove[1] > max[1]) {
 						max[0] = column;
-						max[1] = nextMove[1];
+						[, max[1]] = nextMove;
 					}
 				}
 			}
@@ -268,13 +274,14 @@
 					const nextMove = this.maximizePlay(newBoard, depth - 1);
 					if (min[0] === null || nextMove[1] < min[1]) {
 						min[0] = column;
-						min[1] = nextMove[1];
+						[, min[1]] = nextMove;
 					}
 				}
 			}
 			return min;
 		}
 
+		//eslint-disable-next-line class-methods-use-this
 		switchRound(round) {
 			return round == 0 ? 1 : 0;
 		}
@@ -284,32 +291,21 @@
 				gameOver = true;
 				this.status = 1;
 				window.modal("You Win!", 2000);
+				document.getElementById("uiBlocker").style.display = "none";
 				window.sleep(1000).then(() => this.markWin());
 			}
 			if (this.board.score() == this.score) {
 				gameOver = true;
 				this.status = 2;
 				window.modal("You Lose!", 2000);
+				document.getElementById("uiBlocker").style.display = "none";
 				window.sleep(1000).then(() => this.markWin());
 			}
 			if (this.board.isFull()) {
 				gameOver = true;
 				this.status = 3;
+				document.getElementById("uiBlocker").style.display = "none";
 				window.modal("Draw!", 2000);
-			}
-			const html = document.getElementById("status");
-			if (this.status == 0) {
-				html.className = "status-running";
-				html.textContent = "running";
-			} else if (this.status == 1) {
-				html.className = "status-won";
-				html.textContent = "won";
-			} else if (this.status == 2) {
-				html.className = "status-lost";
-				html.textContent = "lost";
-			} else {
-				html.className = "status-tie";
-				html.textContent = "tie";
 			}
 		}
 
