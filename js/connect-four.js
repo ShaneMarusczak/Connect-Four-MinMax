@@ -218,7 +218,11 @@
 							});
 							window.sleep(y * 125).then(() => {
 								document.getElementById("gameBoard").rows[y].cells[column].className = "coin human-coin";
-
+								window.sleep(250).then(() => {
+									if (!gameOver) {
+										window.modalOpen("Thinking...");
+									}
+								});
 							});
 						}
 						break;
@@ -235,9 +239,6 @@
 
 		generateComputerDecision() {
 			if (this.board.score() != this.score && this.board.score() != -this.score && !this.board.isFull()) {
-				if (!gameOver) {
-					window.modalOpen("Thinking...");
-				}
 				this.iterations = 0;
 				setTimeout(() => {
 					const aiMove = this.maximizePlay(this.board, this.depth);
