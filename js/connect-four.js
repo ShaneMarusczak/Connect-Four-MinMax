@@ -1,252 +1,342 @@
-/**
- * Minimax Implementation 
- * @plain javascript version
- */
-function Game() {
-	this.rows = 6; // Height
-	this.columns = 7; // Width
-	this.status = 0; // 0: running, 1: won, 2: lost, 3: tie
-	this.depth = 4; // Search depth
-	this.score = 100000, // Win/loss score
-		this.round = 0; // 0: Human, 1: Computer
-	this.winning_array = []; // Winning (chips) array
-	this.iterations = 0; // Iteration count
+/*eslint-disable max-classes-per-file */
+/*eslint-disable no-undef */
+/*eslint-disable strict */
+(() => {
+	let gameStarted = false;
 
-	that = this;
-
-	that.init();
-}
-
-Game.prototype.init = function () {
-	// Generate 'real' board
-	// Create 2-dimensional array
-	var game_board = new Array(that.rows);
-	for (var i = 0; i < game_board.length; i++) {
-		game_board[i] = new Array(that.columns);
-
-		for (var j = 0; j < game_board[i].length; j++) {
-			game_board[i][j] = null;
+	class Board {
+		constructor(game, field, player) {
+			this.game = game;
+			this.field = field;
+			this.player = player;
 		}
-	}
 
-	// Create from board object (see board.js)
-	this.board = new Board(this, game_board, 0);
-
-	// Generate visual board
-	var game_board = "";
-	for (var i = 0; i < that.rows; i++) {
-		game_board += "<tr>";
-		for (var j = 0; j < that.columns; j++) {
-			game_board += "<td class='empty'></td>";
+		isFinished(depth, score) {
+			if (depth == 0 || score == this.game.score || score == -this.game.score || this.isFull()) {
+				return true;
+			}
+			return false;
 		}
-		game_board += "</tr>";
-	}
 
-	document.getElementById('game_board').innerHTML = game_board;
+		place(column) {
+			if (this.field[0][column] === null && column >= 0 && column < this.game.columns) {
 
-	// Action listeners
-	var td = document.getElementById('game_board').getElementsByTagName("td");
-
-	for (var i = 0; i < td.length; i++) {
-		if (td[i].addEventListener) {
-			td[i].addEventListener('click', that.act, false);
-		} else if (td[i].attachEvent) {
-			td[i].attachEvent('click', that.act)
-		}
-	}
-}
-
-/**
- * On-click event
- */
-Game.prototype.act = function (e) {
-	var element = e.target || window.event.srcElement;
-
-	// Human round
-	if (that.round == 0) that.place(element.cellIndex);
-
-	// Computer round
-	if (that.round == 1) that.generateComputerDecision();
-}
-
-Game.prototype.place = function (column) {
-	// If not finished
-	if (that.board.score() != that.score && that.board.score() != -that.score && !that.board.isFull()) {
-		for (var y = that.rows - 1; y >= 0; y--) {
-			if (document.getElementById('game_board').rows[y].cells[column].className == 'empty') {
-				if (that.round == 1) {
-					document.getElementById('game_board').rows[y].cells[column].className = 'coin cpu-coin';
-				} else {
-					document.getElementById('game_board').rows[y].cells[column].className = 'coin human-coin';
+				for (let y = this.game.rows - 1; y >= 0; y--) {
+					if (this.field[y][column] === null) {
+						this.field[y][column] = this.player;
+						break;
+					}
 				}
-				break;
+				this.player = this.game.switchRound(this.player);
+				return true;
+			} else {
+				return false;
 			}
 		}
 
-		if (!that.board.place(column)) {
-			return alert("Invalid move!");
+		scorePosition(row, column, deltaY, deltaX) {
+			let humanPoints = 0;
+			let computerPoints = 0;
+			this.game.winningArrayHuman = [];
+			this.game.winningArrayCpu = [];
+
+			for (let i = 0; i < 4; i++) {
+				if (this.field[row][column] == 0) {
+					this.game.winningArrayHuman.push([row, column]);
+					humanPoints++;
+				} else if (this.field[row][column] == 1) {
+					this.game.winningArrayCpu.push([row, column]);
+					computerPoints++;
+				}
+				row = row + deltaY;
+				column = column + deltaX;
+			}
+			if (humanPoints == 4) {
+				this.game.winningArray = this.game.winningArrayHuman;
+				return -this.game.score;
+			} else if (computerPoints == 4) {
+				this.game.winningArray = this.game.winningArrayCpu;
+				return this.game.score;
+			} else {
+				return computerPoints;
+			}
 		}
 
-		that.round = that.switchRound(that.round);
-		that.updateStatus();
+		score() {
+			let points = 0;
+			let verticalPoints = 0;
+			let horizontalPoints = 0;
+			let diagonalPoints1 = 0;
+			let diagonalPoints2 = 0;
+			for (let row = 0; row < this.game.rows - 3; row++) {
+				for (let column = 0; column < this.game.columns; column++) {
+					const score = this.scorePosition(row, column, 1, 0);
+					if (score == this.game.score) return this.game.score;
+					if (score == -this.game.score) return -this.game.score;
+					verticalPoints = verticalPoints + score;
+				}
+			}
+			for (let row = 0; row < this.game.rows; row++) {
+				for (let column = 0; column < this.game.columns - 3; column++) {
+					const score = this.scorePosition(row, column, 0, 1);
+					if (score == this.game.score) return this.game.score;
+					if (score == -this.game.score) return -this.game.score;
+					horizontalPoints = horizontalPoints + score;
+				}
+			}
+			for (let row = 0; row < this.game.rows - 3; row++) {
+				for (let column = 0; column < this.game.columns - 3; column++) {
+					const score = this.scorePosition(row, column, 1, 1);
+					if (score == this.game.score) return this.game.score;
+					if (score == -this.game.score) return -this.game.score;
+					diagonalPoints1 = diagonalPoints1 + score;
+				}
+			}
+			for (let row = 3; row < this.game.rows; row++) {
+				for (let column = 0; column <= this.game.columns - 4; column++) {
+					const score = this.scorePosition(row, column, -1, +1);
+					if (score == this.game.score) return this.game.score;
+					if (score == -this.game.score) return -this.game.score;
+					diagonalPoints2 = diagonalPoints2 + score;
+				}
+			}
+			points = horizontalPoints + verticalPoints + diagonalPoints1 + diagonalPoints2;
+			return points;
+		}
+
+		isFull() {
+			for (let i = 0; i < this.game.columns; i++) {
+				if (this.field[0][i] === null) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		copy() {
+			const newBoard = [];
+			for (let i = 0; i < this.field.length; i++) {
+				newBoard.push(this.field[i].slice());
+			}
+			return new Board(this.game, newBoard, this.player);
+		}
 	}
-}
 
-Game.prototype.generateComputerDecision = function () {
-	if (that.board.score() != that.score && that.board.score() != -that.score && !that.board.isFull()) {
-		that.iterations = 0; // Reset iteration count
-		document.getElementById('loading').style.display = "block"; // Loading message
 
-		// AI is thinking
-		setTimeout(function () {
-			// Algorithm call
-			var ai_move = that.maximizePlay(that.board, that.depth);
+	class Game {
+		constructor(depth) {
+			this.rows = 6;
+			this.columns = 7;
+			this.status = 0;
+			this.depth = depth;
+			this.score = 100000;
+			this.round = 0;
+			this.winningArray = [];
+			this.iterations = 0;
 
-			// Place ai decision
-			that.place(ai_move[0]);
+			this.init();
+		}
 
-			document.getElementById('loading').style.display = "none"; // Remove loading message
-		}, 100);
-	}
-}
+		init() {
+			const gameBoard = new Array(6);
+			for (let i = 0; i < gameBoard.length; i++) {
+				gameBoard[i] = new Array(7);
 
-/**
- * Algorithm
- * Minimax principle
- */
-Game.prototype.maximizePlay = function (board, depth) {
-	// Call score of our board
-	var score = board.score();
+				for (let j = 0; j < gameBoard[i].length; j++) {
+					gameBoard[i][j] = null;
+				}
+			}
+			this.board = new Board(this, gameBoard, 0);
+			const td = document.getElementById("gameBoard").getElementsByTagName("td");
+			for (let i = 0; i < td.length; i++) {
+				if (td[i].addEventListener) {
+					td[i].addEventListener("click", (e) => {
+						this.act(e);
+					}, false);
+				} else if (td[i].attachEvent) {
+					td[i].attachEvent("click", this.act);
+				}
+			}
+		}
 
-	// Break
-	if (board.isFinished(depth, score)) return [null, score];
+		act(e) {
+			if (gameStarted) {
+				const element = e.target || window.event.srcElement;
+				if (this.round == 0) this.place(element.cellIndex);
+				if (this.round == 1) this.generateComputerDecision();
+			}
+		}
 
-	// Column, Score
-	var max = [null, -99999];
+		static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
+			if (currentRow === inputRow) return;
+			document.getElementById("td" + currentRow + inputCol).classList.add("coin");
+			document.getElementById("td" + currentRow + inputCol).classList.add(moveTurn ? "cpu-coin" : "human-coin");
+			window.sleep(120).then(() => {
+				document.getElementById("td" + currentRow + inputCol).classList.remove("coin");
+				document.getElementById("td" + currentRow + inputCol).classList.remove(moveTurn ? "cpu-coin" : "human-coin");
+			});
+			window.sleep(125).then(() => {
+				Game.animateDrop({
+					"currentRow": currentRow + 1,
+					inputCol,
+					inputRow,
+					moveTurn
+				});
+			});
+		}
 
-	// For all possible moves
-	for (var column = 0; column < that.columns; column++) {
-		var new_board = board.copy(); // Create new board
+		place(column) {
+			if (this.board.score() != this.score && this.board.score() != -this.score && !this.board.isFull()) {
+				for (let y = this.rows - 1; y >= 0; y--) {
+					if (document.getElementById("gameBoard").rows[y].cells[column].className == "empty") {
+						if (this.round == 1) {
+							Game.animateDrop({
+								"inputCol": column,
+								"inputRow": y,
+								"moveTurn": true
+							});
+							window.sleep(y * 125).then(() => {
+								document.getElementById("gameBoard").rows[y].cells[column].className = "coin cpu-coin";
+							});
+						} else {
+							Game.animateDrop({
+								"inputCol": column,
+								"inputRow": y,
+								"moveTurn": false
+							});
+							window.sleep(y * 125).then(() => {
+								document.getElementById("gameBoard").rows[y].cells[column].className = "coin human-coin";
+							});
+						}
+						break;
+					}
+				}
+				if (!this.board.place(column)) {
+					return alert("Invalid move!");
+				}
+				this.round = this.switchRound(this.round);
+				this.updateStatus();
+			}
+			return null;
+		}
 
-		if (new_board.place(column)) {
+		generateComputerDecision() {
+			if (this.board.score() != this.score && this.board.score() != -this.score && !this.board.isFull()) {
+				this.iterations = 0;
+				setTimeout(() => {
+					// window.modal("Thinking...", 1000);
+					const aiMove = this.maximizePlay(this.board, this.depth);
+					sleep(1100).then(() => {
+						this.place(aiMove[0]);
+					});
+				}, 10);
+			}
+		}
 
-			that.iterations++; // Debug
+		maximizePlay(board, depth) {
+			const score = board.score();
+			if (board.isFinished(depth, score)) return [null, score];
+			const max = [null, -99999];
+			for (let column = 0; column < this.columns; column++) {
+				const newBoard = board.copy();
+				if (newBoard.place(column)) {
+					this.iterations++;
+					const nextMove = this.minimizePlay(newBoard, depth - 1);
+					if (max[0] === null || nextMove[1] > max[1]) {
+						max[0] = column;
+						max[1] = nextMove[1];
+					}
+				}
+			}
+			return max;
+		}
 
-			var next_move = that.minimizePlay(new_board, depth - 1); // Recursive calling
+		minimizePlay(board, depth) {
+			const score = board.score();
+			if (board.isFinished(depth, score)) return [null, score];
+			const min = [null, 99999];
+			for (let column = 0; column < this.columns; column++) {
+				const newBoard = board.copy();
+				if (newBoard.place(column)) {
+					this.iterations++;
+					const nextMove = this.maximizePlay(newBoard, depth - 1);
+					if (min[0] === null || nextMove[1] < min[1]) {
+						min[0] = column;
+						min[1] = nextMove[1];
+					}
+				}
+			}
+			return min;
+		}
 
-			// Evaluate new move
-			if (max[0] == null || next_move[1] > max[1]) {
-				max[0] = column;
-				max[1] = next_move[1];
+		switchRound(round) {
+			return round == 0 ? 1 : 0;
+		}
+
+		updateStatus() {
+			if (this.board.score() == -this.score) {
+				this.status = 1;
+				this.markWin();
+				alert("You have won!");
+			}
+			if (this.board.score() == this.score) {
+				this.status = 2;
+				alert("You have lost!");
+				window.sleep(1000).then(() => this.markWin());
+			}
+			if (this.board.isFull()) {
+				this.status = 3;
+				alert("Tie!");
+			}
+			const html = document.getElementById("status");
+			if (this.status == 0) {
+				html.className = "status-running";
+				html.textContent = "running";
+			} else if (this.status == 1) {
+				html.className = "status-won";
+				html.textContent = "won";
+			} else if (this.status == 2) {
+				html.className = "status-lost";
+				html.textContent = "lost";
+			} else {
+				html.className = "status-tie";
+				html.textContent = "tie";
+			}
+		}
+
+		markWin() {
+			document.getElementById("gameBoard").className = "finished";
+			for (let i = 0; i < this.winningArray.length; i++) {
+				const name = document.getElementById("gameBoard").rows[this.winningArray[i][0]].cells[this.winningArray[i][1]].className;
+				document.getElementById("gameBoard").rows[this.winningArray[i][0]].cells[this.winningArray[i][1]].className = name + " win";
 			}
 		}
 	}
 
-	return max;
-}
+	function start() {
+		gameStarted = true;
+		window.Game = new Game(document.getElementById("difficulty").options[difficulty.selectedIndex].value);
+	}
 
-Game.prototype.minimizePlay = function (board, depth) {
-	var score = board.score();
+	(() => {
+		document.getElementById("start").addEventListener("click", start);
 
-	if (board.isFinished(depth, score)) return [null, score];
 
-	// Column, score
-	var min = [null, 99999];
-
-	for (var column = 0; column < that.columns; column++) {
-		var new_board = board.copy();
-
-		if (new_board.place(column)) {
-
-			that.iterations++;
-
-			var next_move = that.maximizePlay(new_board, depth - 1);
-
-			if (min[0] == null || next_move[1] < min[1]) {
-				min[0] = column;
-				min[1] = next_move[1];
+		for (let i = 0; i < 6; i++) {
+			const tableRow = document.createElement("tr");
+			for (let j = 0; j < 7; j++) {
+				const backGround = document.createElement("div");
+				const tableData = document.createElement("td");
+				tableData.className = "empty";
+				tableData.id = "td" + i + j;
+				tableRow.appendChild(tableData);
 			}
-
+			document.getElementById("gameBoard").appendChild(tableRow);
 		}
-	}
-	return min;
-}
 
-Game.prototype.switchRound = function (round) {
-	// 0 Human, 1 Computer
-	if (round == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
 
-Game.prototype.updateStatus = function () {
-	// Human won
-	if (that.board.score() == -that.score) {
-		that.status = 1;
-		that.markWin();
-		alert("You have won!");
-	}
+	})();
 
-	// Computer won
-	if (that.board.score() == that.score) {
-		that.status = 2;
-		that.markWin();
-		alert("You have lost!");
-	}
 
-	// Tie
-	if (that.board.isFull()) {
-		that.status = 3;
-		alert("Tie!");
-	}
+})();
 
-	var html = document.getElementById('status');
-	if (that.status == 0) {
-		html.className = "status-running";
-		html.innerHTML = "running";
-	} else if (that.status == 1) {
-		html.className = "status-won";
-		html.innerHTML = "won";
-	} else if (that.status == 2) {
-		html.className = "status-lost";
-		html.innerHTML = "lost";
-	} else {
-		html.className = "status-tie";
-		html.innerHTML = "tie";
-	}
-}
-
-Game.prototype.markWin = function () {
-	document.getElementById('game_board').className = "finished";
-	for (var i = 0; i < that.winning_array.length; i++) {
-		var name = document.getElementById('game_board').rows[that.winning_array[i][0]].cells[that.winning_array[i][1]].className;
-		document.getElementById('game_board').rows[that.winning_array[i][0]].cells[that.winning_array[i][1]].className = name + " win";
-	}
-}
-
-Game.prototype.restartGame = function () {
-	if (confirm('Game is going to be restarted.\nAre you sure?')) {
-		// Dropdown value
-		var difficulty = document.getElementById('difficulty');
-		var depth = difficulty.options[difficulty.selectedIndex].value;
-		that.depth = depth;
-		that.status = 0;
-		that.round = 0;
-		that.init();
-		document.getElementById('game_board').className = "";
-		that.updateStatus();
-	}
-}
-
-/**
- * Start game
- */
-function Start() {
-	window.Game = new Game();
-}
-
-window.onload = function () {
-	Start()
-};

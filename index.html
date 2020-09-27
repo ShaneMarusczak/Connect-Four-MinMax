@@ -9,6 +9,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Connect Four</title>
 	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" type="text/css" href="https://marusczak.com/BuildingBlocks/css/modal.min.css" />
 </head>
 
 <body>
@@ -20,7 +21,8 @@
 		<h1 class="header-text">Connect Four</h1>
 
 		<div class="box-left">
-			<table id="game_board" cellpadding="0"></table>
+			<!-- <div id="floatingCircles"></div> -->
+			<table id="gameBoard" cellpadding="0"></table>
 			<div id="loading">AI is thinking...</div>
 		</div>
 
@@ -29,17 +31,18 @@
 				<p class="header">Difficulty</p>
 				<p>
 					<select id="difficulty" autocomplete="off">
-						<option value="1">Depth 1</option>
-						<option value="2">Depth 2 (Passive)</option>
-						<option value="3">Depth 3</option>
-						<option value="4" selected="selected">Depth 4 (Easy)</option>
-						<option value="5">Depth 5</option>
-						<option value="6">Depth 6 (Moderate)</option>
-						<option value="7">Depth 7</option>
-						<option value="8">Depth 8 (Tougher)</option>
+						<option value="1">Super Easy</option>
+						<option value="2">Very Easy</option>
+						<option value="3">Easy</option>
+						<option value="4" selected="selected">Average</option>
+						<option value="5">Slighty Difficult</option>
+						<option value="6">Moderately Difficult</option>
+						<option value="7">Very Difficult</option>
+						<option value="8">Insane</option>
 					</select>
 				</p>
-				<p><button class="save" onclick="Game.restartGame();" type="submit">Restart game</button></p>
+				<p><button id="start" type="submit">Start Game</button></p>
+				<p><button id="restart" onclick="location.reload()" type="submit">Retart Game</button></p>
 			</div>
 
 			<div id="debug">
@@ -47,15 +50,10 @@
 			</div>
 		</div>
 	</div>
-
-	<script>
-		function selectAlgorithm(that) {
-			window.location = '../' + that.value + '/index.html';
-		};
-	</script>
-
-	<script src="js/board.min.js"></script>
-	<script src="js/connect-four.min.js"></script>
+	<script type="text/javascript" src="https://marusczak.com/BuildingBlocks/js/buildingBlocks.min.js"></script>
+	<script type="text/javascript" src="https://marusczak.com/BuildingBlocks/js/modal.min.js"></script>
+	<!-- <script src="js/board.js"></script> -->
+	<script src="js/connect-four.js"></script>
 </body>
 
 </html>

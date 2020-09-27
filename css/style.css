@@ -1,11 +1,18 @@
+@import url("https://fonts.googleapis.com/css?family=Orbitron&display=swap");
+
 html {
+	font-family: "Orbitron", sans-serif !important;
 	background-color: cornsilk;
+}
+
+button,
+select {
+	font-family: "Orbitron", sans-serif !important;
 }
 
 body {
 	background: #fff;
 	color: #333;
-	font-family: 'Arial';
 	overflow-y: hidden;
 }
 
@@ -31,9 +38,10 @@ h1 {
 	overflow: hidden;
 }
 
-#game_board {
+#gameBoard {
 	overflow: hidden;
-	border-collapse: collapse;
+	background-color: blue;
+	/* border-collapse: collapse; */
 }
 
 #coinfeld {
@@ -42,15 +50,16 @@ h1 {
 	height: 55px;
 }
 
-#game_board td {
+#gameBoard td {
 	border: 1px solid blue;
 	position: relative;
 	width: 100px;
 	height: 100px;
 	cursor: pointer;
+	background-color: cornsilk;
 }
 
-#game_board td:hover::after {
+#gameBoard td:hover::after {
 	background-color: #F4F4F4;
 	content: '';
 	height: 10000px;
@@ -62,7 +71,7 @@ h1 {
 }
 
 .hover {
-	background-color: #F4F4F4;
+	background-color: dimgray;
 }
 
 #coin {
@@ -79,32 +88,32 @@ h1 {
 	background-color: transparent !important;
 }
 
-#game_board td {
+#gameBoard td {
 	border-radius: 50%;
 }
 
-#game_board .coin {
+#gameBoard .coin {
 	cursor: default;
 }
 
-#game_board tr {
+#gameBoard tr {
 	width: 100%;
 	height: 100%;
 }
 
-#game_board .human-coin,
+#gameBoard .human-coin,
 .human-coin {
 	border-radius: 50%;
 	background: #333;
 }
 
-#game_board .cpu-coin,
+#gameBoard .cpu-coin,
 .cpu-coin {
 	border-radius: 50%;
 	background: #DC143C;
 }
 
-#game_board .win {
+#gameBoard .win {
 	border-radius: 50%;
 	animation: animationFrames 1s infinite;
 	-webkit-animation: animationFrames 1s infinite;
@@ -336,4 +345,28 @@ select {
 #githubicon:hover {
 	transform: translateY(-5px);
 	background-color: azure;
+}
+
+#floatingCircles {
+	padding-top: 17px;
+	margin: 0 auto;
+	display: flex;
+	width: 840px;
+	height: 120px;
+}
+
+.circleDiv {
+	border-radius: 60px;
+	background-color: cornsilk;
+	width: 98px !important;
+	height: 98px !important;
+}
+
+.floatingCircle {
+	background-color: transparent;
+	border-radius: 90px;
+	width: 100px !important;
+	height: 100px !important;
+	margin-right: 10px;
+	margin-left: 10px;
 }
