@@ -20,7 +20,6 @@
 
 		place(column) {
 			if (this.fieldOfPlay[0][column] === null && column >= 0 && column < this.game.columns) {
-
 				for (let y = this.game.rows - 1; y >= 0; y--) {
 					if (this.fieldOfPlay[y][column] === null) {
 						this.fieldOfPlay[y][column] = this.player;
@@ -34,7 +33,7 @@
 			}
 		}
 
-		scorePosition(row, column, deltaY, deltaX) {
+		scoreBoard(row, column, deltaY, deltaX) {
 			let humanPoints = 0;
 			let computerPoints = 0;
 			let internalRow = row;
@@ -64,7 +63,7 @@
 			}
 		}
 
-		score() {
+		evaluateScore() {
 			let points = 0;
 			let verticalPoints = 0;
 			let horizontalPoints = 0;
@@ -72,7 +71,7 @@
 			let diagonalPoints2 = 0;
 			for (let row = 0; row < this.game.rows - 3; row++) {
 				for (let column = 0; column < this.game.columns; column++) {
-					const score = this.scorePosition(row, column, 1, 0);
+					const score = this.scoreBoard(row, column, 1, 0);
 					if (score == this.game.score) return this.game.score;
 					if (score == -this.game.score) return -this.game.score;
 					verticalPoints = verticalPoints + score;
@@ -80,7 +79,7 @@
 			}
 			for (let row = 0; row < this.game.rows; row++) {
 				for (let column = 0; column < this.game.columns - 3; column++) {
-					const score = this.scorePosition(row, column, 0, 1);
+					const score = this.scoreBoard(row, column, 0, 1);
 					if (score == this.game.score) return this.game.score;
 					if (score == -this.game.score) return -this.game.score;
 					horizontalPoints = horizontalPoints + score;
@@ -88,7 +87,7 @@
 			}
 			for (let row = 0; row < this.game.rows - 3; row++) {
 				for (let column = 0; column < this.game.columns - 3; column++) {
-					const score = this.scorePosition(row, column, 1, 1);
+					const score = this.scoreBoard(row, column, 1, 1);
 					if (score == this.game.score) return this.game.score;
 					if (score == -this.game.score) return -this.game.score;
 					diagonalPoints1 = diagonalPoints1 + score;
@@ -96,7 +95,7 @@
 			}
 			for (let row = 3; row < this.game.rows; row++) {
 				for (let column = 0; column <= this.game.columns - 4; column++) {
-					const score = this.scorePosition(row, column, -1, +1);
+					const score = this.scoreBoard(row, column, -1, +1);
 					if (score == this.game.score) return this.game.score;
 					if (score == -this.game.score) return -this.game.score;
 					diagonalPoints2 = diagonalPoints2 + score;
@@ -133,7 +132,6 @@
 			this.score = 100000;
 			this.round = 0;
 			this.winners = [];
-			this.iterations = 0;
 
 			this.init();
 		}
@@ -150,14 +148,14 @@
 			this.board = new Board(this, gameBoard, 0);
 			Array.from(document.getElementById("gameBoard").getElementsByTagName("td")).forEach(td => {
 				td.addEventListener("click", (e) => {
-					this.act(e);
+					this.move(e);
 				}, false);
 				td.addEventListener("mouseover", hoverOverCollumnHighLight);
 				td.addEventListener("mouseleave", hoverOverCollumnHighLightReset);
 			});
 		}
 
-		act(e) {
+		move(e) {
 			if (gameStarted && !gameOver) {
 				document.getElementById("uiBlocker").style.display = "block";
 				const element = e.target || window.event.srcElement;
@@ -185,7 +183,7 @@
 		}
 
 		place(column) {
-			if (this.board.score() != this.score && this.board.score() != -this.score && !this.board.isFull()) {
+			if (this.board.evaluateScore() != this.score && this.board.evaluateScore() != -this.score && !this.board.isFull()) {
 				for (let y = this.rows - 1; y >= 0; y--) {
 					if (document.getElementById("gameBoard").rows[y].cells[column].classList.contains("empty")) {
 						if (this.round == 1) {
@@ -228,8 +226,7 @@
 		}
 
 		generateComputerDecision() {
-			if (this.board.score() != this.score && this.board.score() != -this.score && !this.board.isFull()) {
-				this.iterations = 0;
+			if (this.board.evaluateScore() != this.score && this.board.evaluateScore() != -this.score && !this.board.isFull()) {
 				setTimeout(() => {
 					const aiMove = this.maximize(this.board, this.depth);
 					window.sleep(700).then(() => {
@@ -241,13 +238,12 @@
 		}
 
 		maximize(board, depth) {
-			const score = board.score();
+			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const max = [null, -99999];
 			for (let column = 0; column < this.columns; column++) {
 				const newBoard = board.getBoardCopy();
 				if (newBoard.place(column)) {
-					this.iterations++;
 					const nextMove = this.minimize(newBoard, depth - 1);
 					if (max[0] === null || nextMove[1] > max[1]) {
 						max[0] = column;
@@ -259,13 +255,12 @@
 		}
 
 		minimize(board, depth) {
-			const score = board.score();
+			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const min = [null, 99999];
 			for (let column = 0; column < this.columns; column++) {
 				const newBoard = board.getBoardCopy();
 				if (newBoard.place(column)) {
-					this.iterations++;
 					const nextMove = this.maximize(newBoard, depth - 1);
 					if (min[0] === null || nextMove[1] < min[1]) {
 						min[0] = column;
@@ -282,19 +277,17 @@
 		}
 
 		checkGameOver() {
-			if (this.board.score() == -this.score) {
+			if (this.board.evaluateScore() == -this.score) {
 				gameOver = true;
 				window.modal("You Win!", 2000);
 				document.getElementById("uiBlocker").style.display = "none";
 				window.sleep(1000).then(() => this.winnersColorChange());
-			}
-			if (this.board.score() == this.score) {
+			} else if (this.board.evaluateScore() == this.score) {
 				gameOver = true;
 				window.modal("You Lose!", 2000);
 				document.getElementById("uiBlocker").style.display = "none";
 				window.sleep(1000).then(() => this.winnersColorChange());
-			}
-			if (this.board.isFull()) {
+			} else if (this.board.isFull()) {
 				gameOver = true;
 				document.getElementById("uiBlocker").style.display = "none";
 				window.modal("Draw!", 2000);
@@ -336,6 +329,7 @@
 
 	function start() {
 		gameStarted = true;
+		document.getElementById("difficulty").disabled = true;
 		window.Game = new Game(Array.from(document.getElementById("difficulty").options).find(d => d.selected).value);
 	}
 

@@ -14,9 +14,9 @@
 <div id="uiBlocker"></div>
 
 <body>
-	<header>
-		<h1 class="header-text">Connect Four</h1>
+	<h1 class="header-text">Connect Four</h1>
 
+	<header>
 		<a id="homeLink" href="https://marusczak.com/Games-Home-Page" rel="noreferrer"><img id="homeIcon"
 				src="house-icon.png"></a>
 		<a id="gitHubLink" href="https://github.com/ShaneMarusczak/Connect-Four-MinMax" target="_blank"
@@ -24,12 +24,11 @@
 	</header>
 
 	<div id="container">
-		<div class="box-left">
+		<div class="box-top">
 			<div id="floatingCircles"></div>
-			<table id="gameBoard" cellpadding="0"></table>
+			<table id="gameBoard" class="shadowBox" cellpadding="0"></table>
 		</div>
-
-		<div class="box-right">
+		<div class="box-bottom">
 			<div id="btns">
 				<p class="header">Difficulty</p>
 				<select id="difficulty" class="shadowBox" autocomplete="off">
@@ -45,7 +44,7 @@
 				<button id="restart" class="shadowBox" onclick="location.reload()" type="submit">Restart</button>
 			</div>
 		</div>
-		<p id="lastUpdate">Last Updated: September 27, 2020</p>
+		<p id="lastUpdate">Last Updated: September 28, 2020</p>
 	</div>
 	<script type="text/javascript" src="https://marusczak.com/BuildingBlocks/js/buildingBlocks.min.js"></script>
 	<script type="text/javascript" src="https://marusczak.com/BuildingBlocks/js/noTimeModal.min.js"></script>

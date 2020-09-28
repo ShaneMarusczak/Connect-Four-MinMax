@@ -15,6 +15,18 @@ h1 {
 	background-color: cornsilk;
 }
 
+.header-text {
+	position: absolute;
+	top: 15vh;
+	left: 5vw;
+}
+
+.header {
+	font-size: large;
+	margin-top: 30px;
+	margin-bottom: 0;
+}
+
 button,
 select {
 	font-family: "Orbitron", sans-serif !important;
@@ -31,11 +43,6 @@ button:hover {
 	cursor: pointer;
 }
 
-a,
-a:visited {
-	color: #551A8B;
-}
-
 h1 {
 	line-height: 1;
 	margin: 0;
@@ -43,7 +50,7 @@ h1 {
 }
 
 #container,
-.box-left {
+.box-top {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -51,6 +58,7 @@ h1 {
 }
 
 #gameBoard {
+	padding: 5px;
 	width: auto;
 	overflow: hidden;
 	background-color: blue;
@@ -63,7 +71,8 @@ h1 {
 }
 
 #gameBoard td {
-	border: 1px solid blue;
+	padding: 2px;
+	border: 4px solid blue;
 	position: relative;
 	width: 100px;
 	height: 100px;
@@ -116,13 +125,13 @@ h1 {
 #gameBoard .human-coin,
 .human-coin {
 	border-radius: 50%;
-	background: #333;
+	background: darkred;
 }
 
 #gameBoard .cpu-coin,
 .cpu-coin {
 	border-radius: 50%;
-	background: #DC143C;
+	background: darkkhaki;
 }
 
 #gameBoard .win {
@@ -184,16 +193,6 @@ h1 {
 	}
 }
 
-input {
-	border: 1px solid #808080;
-	margin: 1px;
-	outline: none;
-}
-
-.input {
-	width: 20px;
-}
-
 .save {
 	border: 1px solid #808080;
 	margin: 1px;
@@ -205,15 +204,6 @@ input {
 .save:hover,
 .save:active {
 	background: #dadada;
-}
-
-p {
-	margin: 0;
-	padding: 0;
-}
-
-.header {
-	font-size: large;
 }
 
 select {
@@ -228,39 +218,6 @@ select {
 .save {
 	width: 160px;
 	height: 30px;
-}
-
-.text {
-	font-size: 12px;
-	font-weight: bold;
-	color: #4C4C4C;
-}
-
-.text a {
-	color: #333;
-}
-
-.subheader-text {
-	margin-left: 3px !important;
-}
-
-
-@media screen and (max-width: 600px) {
-	#container {
-		margin: 0;
-		top: 50px;
-		left: 0;
-		padding: 0 5px;
-	}
-
-	.box-left {
-		float: none;
-	}
-
-	.box-right {
-		display: block;
-		float: none;
-	}
 }
 
 #githubicon {
@@ -283,7 +240,7 @@ select {
 #homeIcon {
 	position: absolute;
 	top: 40px;
-	left: 5vw;
+	left: 7vw;
 	width: 70px;
 	height: 70px;
 	transition: 1.5s;
@@ -338,7 +295,7 @@ select {
 
 @keyframes glow {
 	0% {
-		background-color: #333;
+		background-color: darkred;
 	}
 
 	50% {
@@ -346,7 +303,7 @@ select {
 	}
 
 	100% {
-		background-color: #333;
+		background-color: darkred;
 	}
 }
 
@@ -354,14 +311,16 @@ select {
 	animation-name: gbounce;
 	animation-duration: 2.5s;
 	animation-iteration-count: infinite;
-	background-color: #333;
+	background-color: darkred;
+	border: 2px solid darkgray;
 }
 
 .glow {
 	animation-name: glow;
 	animation-duration: 2.5s;
 	animation-iteration-count: infinite;
-	background-color: #333;
+	background-color: darkred;
+	border: 2px solid darkgray;
 }
 
 #uiBlocker {
