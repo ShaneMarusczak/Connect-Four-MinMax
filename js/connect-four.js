@@ -217,6 +217,7 @@
 					}
 				}
 				if (!this.board.place(column)) {
+					document.getElementById("uiBlocker").style.display = "none";
 					return alert("Invalid move!");
 				}
 				this.round = this.switchRound(this.round);

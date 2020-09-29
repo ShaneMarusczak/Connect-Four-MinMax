@@ -67,9 +67,17 @@ button {
 	width: 100px;
 	height: 60px;
 	margin-left: 50px;
+	border-radius: 10px;
+	background-color: transparent;
+	border: 2px solid black;
 }
 
 button:hover {
+	background-color: dimgray;
+	cursor: pointer;
+}
+
+select:hover {
 	cursor: pointer;
 }
 
@@ -183,70 +191,12 @@ h1 {
 	}
 }
 
-@-moz-keyframes animationFrames {
-	50% {
-		opacity: 0.6;
-	}
-
-	100% {
-		opacity: 1;
-	}
-}
-
-@-webkit-keyframes animationFrames {
-	50% {
-		opacity: 0.6;
-	}
-
-	100% {
-		opacity: 1;
-	}
-}
-
-@-o-keyframes animationFrames {
-	50% {
-		opacity: 0.6;
-	}
-
-	100% {
-		opacity: 1;
-	}
-}
-
-@-ms-keyframes animationFrames {
-	50% {
-		opacity: 0.6;
-	}
-
-	100% {
-		opacity: 1;
-	}
-}
-
-.save {
-	border: 1px solid #808080;
-	margin: 1px;
-	outline: none;
-	width: 140px;
-	cursor: pointer;
-}
-
-.save:hover,
-.save:active {
-	background: #dadada;
-}
-
 select {
 	background: #fff;
 	margin: 1px;
 	border: 1px solid #808080;
 	outline: none;
 	width: 100px;
-	height: 30px;
-}
-
-.save {
-	width: 160px;
 	height: 30px;
 }
 
