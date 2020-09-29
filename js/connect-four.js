@@ -206,7 +206,7 @@
 							});
 							window.sleep(y * 125).then(() => {
 								document.getElementById("gameBoard").rows[y].cells[column].className = "coin human-coin";
-								window.sleep(250).then(() => {
+								window.sleep(125).then(() => {
 									if (!gameOver) {
 										window.modalOpen("Thinking...");
 									}
