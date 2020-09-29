@@ -165,7 +165,15 @@
 		}
 
 		static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
-			if (currentRow === inputRow) return;
+			if (currentRow === inputRow) {
+				if (!gameOver && !moveTurn) {
+					window.sleep(150).then(() => {
+						window.modalOpen("Thinking...");
+					});
+				}
+				document.getElementById("td" + currentRow + inputCol).className = moveTurn ? "coin cpu-coin" : "coin human-coin";
+				return;
+			}
 			document.getElementById("td" + currentRow + inputCol).classList.add("coin");
 			document.getElementById("td" + currentRow + inputCol).classList.add(moveTurn ? "cpu-coin" : "human-coin");
 			window.sleep(120).then(() => {
@@ -204,14 +212,6 @@
 								"inputRow": y,
 								"moveTurn": false
 							});
-							window.sleep(y * 125).then(() => {
-								document.getElementById("gameBoard").rows[y].cells[column].className = "coin human-coin";
-								window.sleep(125).then(() => {
-									if (!gameOver) {
-										window.modalOpen("Thinking...");
-									}
-								});
-							});
 						}
 						break;
 					}
@@ -234,7 +234,7 @@
 						window.modalClose();
 						window.sleep(300).then(() => this.place(aiMove[0]));
 					});
-				}, 800);
+				}, 1000);
 			}
 		}
 
