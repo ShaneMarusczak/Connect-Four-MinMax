@@ -17,8 +17,38 @@ h1 {
 
 .header-text {
 	position: absolute;
-	top: 15vh;
-	left: 5vw;
+	top: 20vh;
+	left: 10vw;
+	width: 150px;
+	text-align: center;
+	border: 3px solid black;
+	padding: 7px;
+	border-radius: 15px;
+}
+
+@media screen and (max-width: 1470px) {
+	#floatingCircles {
+		display: none !important;
+	}
+
+	header {
+		margin-top: 10px;
+		margin-bottom: 20px;
+		display: flex;
+		justify-content: center;
+	}
+
+	.header-text {
+		position: relative;
+		top: auto;
+		left: auto;
+		display: flex;
+		width: 400px;
+	}
+}
+
+p {
+	font-size: large;
 }
 
 .header {

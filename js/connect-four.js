@@ -229,6 +229,8 @@
 			if (this.board.evaluateScore() != this.score && this.board.evaluateScore() != -this.score && !this.board.isFull()) {
 				setTimeout(() => {
 					const aiMove = this.maximize(this.board, this.depth);
+					console.log(aiMove);
+
 					window.sleep(700).then(() => {
 						window.modalClose();
 						window.sleep(300).then(() => this.place(aiMove[0]));
