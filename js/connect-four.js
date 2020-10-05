@@ -241,35 +241,42 @@
 			}
 		}
 
-		maximize(board, depth) {
+		maximize(board, depth, alpha, beta) {
 			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const max = [null, -99999];
 			for (let column = 0; column < this.columns; column++) {
 				const newBoard = board.getBoardCopy();
 				if (newBoard.place(column)) {
-					const nextMove = this.minimize(newBoard, depth - 1);
+					const nextMove = this.minimize(newBoard, depth - 1, alpha, beta);
 					if (max[0] === null || nextMove[1] > max[1]) {
 						max[0] = column;
 						[, max[1]] = nextMove;
+						[, alpha] = nextMove;
 					}
+
+					if (alpha >= beta) return max;
 				}
 			}
 			return max;
 		}
 
-		minimize(board, depth) {
+		minimize(board, depth, alpha, beta) {
 			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const min = [null, 99999];
 			for (let column = 0; column < this.columns; column++) {
 				const newBoard = board.getBoardCopy();
 				if (newBoard.place(column)) {
-					const nextMove = this.maximize(newBoard, depth - 1);
+					const nextMove = this.maximize(newBoard, depth - 1, alpha, beta);
 					if (min[0] === null || nextMove[1] < min[1]) {
 						min[0] = column;
 						[, min[1]] = nextMove;
+						[, beta] = nextMove;
+
 					}
+					if (alpha >= beta) return min;
+
 				}
 			}
 			return min;
