@@ -191,9 +191,11 @@
 		}
 
 		place(column) {
-			if (this.board.evaluateScore() != this.score && this.board.evaluateScore() != -this.score && !this.board.isFull()) {
+			const thisScore = this.board.evaluateScore();
+			if (thisScore != this.score && thisScore != -this.score && !this.board.isFull()) {
 				for (let y = this.rows - 1; y >= 0; y--) {
-					if (document.getElementById("gameBoard").rows[y].cells[column].classList.contains("empty")) {
+					const td = document.getElementById("gameBoard").rows[y].cells[column];
+					if (td.classList.contains("empty")) {
 						if (this.round == 1) {
 							Game.animateDrop({
 								"inputCol": column,
@@ -201,7 +203,7 @@
 								"moveTurn": true
 							});
 							window.sleep(y * 125).then(() => {
-								document.getElementById("gameBoard").rows[y].cells[column].className = "coin cpu-coin";
+								td.className = "coin cpu-coin";
 								window.sleep(200).then(() => {
 									document.getElementById("uiBlocker").style.display = "none";
 								});
@@ -227,7 +229,8 @@
 		}
 
 		generateComputerDecision() {
-			if (this.board.evaluateScore() != this.score && this.board.evaluateScore() != -this.score && !this.board.isFull()) {
+			const thisScore = this.board.evaluateScore();
+			if (thisScore != this.score && thisScore != -this.score && !this.board.isFull()) {
 				setTimeout(() => {
 					const aiMove = this.maximize(this.board, this.depth);
 					window.sleep(700).then(() => {
@@ -278,12 +281,13 @@
 		}
 
 		checkGameOver() {
-			if (this.board.evaluateScore() == -this.score) {
+			const thisScore = this.board.evaluateScore();
+			if (thisScore == -this.score) {
 				gameOver = true;
 				window.modal("You Win!", 2000);
 				document.getElementById("uiBlocker").style.display = "none";
 				window.sleep(1000).then(() => this.winnersColorChange());
-			} else if (this.board.evaluateScore() == this.score) {
+			} else if (thisScore == this.score) {
 				gameOver = true;
 				window.modal("You Lose!", 2000);
 				document.getElementById("uiBlocker").style.display = "none";
