@@ -233,7 +233,7 @@
 			if (thisScore != this.score && thisScore != -this.score && !this.board.isFull()) {
 				setTimeout(() => {
 					this.leaves = 0;
-					const aiMove = this.maximize(this.board, this.depth, true);
+					const aiMove = this.maximize(this.board, this.depth);
 					window.sleep(700).then(() => {
 						window.modalClose();
 						window.sleep(300).then(() => this.place(aiMove[0]));
@@ -242,7 +242,7 @@
 			}
 		}
 
-		maximize(board, depth, firstLayer) {
+		maximize(board, depth) {
 			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const max = [null, -99999];
@@ -253,7 +253,6 @@
 					if (max[0] === null || nextMove[1] > max[1]) {
 						max[0] = column;
 						[, max[1]] = nextMove;
-						if (max[1] === this.score && !firstLayer) return max;
 					}
 				}
 			}
@@ -267,11 +266,10 @@
 			for (let column = 0; column < this.columns; column++) {
 				const newBoard = board.getBoardCopy();
 				if (newBoard.place(column)) {
-					const nextMove = this.maximize(newBoard, depth - 1, false);
+					const nextMove = this.maximize(newBoard, depth - 1);
 					if (min[0] === null || nextMove[1] < min[1]) {
 						min[0] = column;
 						[, min[1]] = nextMove;
-						if (min[1] === -this.score) return min;
 
 					}
 				}
