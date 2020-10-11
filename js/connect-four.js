@@ -132,6 +132,7 @@
 			this.score = 100000;
 			this.round = 0;
 			this.winners = [];
+			this.leaves = 0;
 
 			this.init();
 		}
@@ -232,7 +233,9 @@
 			const thisScore = this.board.evaluateScore();
 			if (thisScore != this.score && thisScore != -this.score && !this.board.isFull()) {
 				setTimeout(() => {
-					const aiMove = this.maximize(this.board, this.depth);
+					this.leaves = 0;
+					const aiMove = this.maximize(this.board, this.depth, true);
+					console.log(this.leaves);
 					window.sleep(700).then(() => {
 						window.modalClose();
 						window.sleep(300).then(() => this.place(aiMove[0]));
@@ -241,7 +244,8 @@
 			}
 		}
 
-		maximize(board, depth) {
+		maximize(board, depth, firstLayer) {
+			this.leaves++;
 			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const max = [null, -99999];
@@ -252,6 +256,7 @@
 					if (max[0] === null || nextMove[1] > max[1]) {
 						max[0] = column;
 						[, max[1]] = nextMove;
+						if (max[1] && !firstLayer === this.score) return max;
 					}
 				}
 			}
@@ -259,16 +264,18 @@
 		}
 
 		minimize(board, depth) {
+			this.leaves++;
 			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const min = [null, 99999];
 			for (let column = 0; column < this.columns; column++) {
 				const newBoard = board.getBoardCopy();
 				if (newBoard.place(column)) {
-					const nextMove = this.maximize(newBoard, depth - 1);
+					const nextMove = this.maximize(newBoard, depth - 1, false);
 					if (min[0] === null || nextMove[1] < min[1]) {
 						min[0] = column;
 						[, min[1]] = nextMove;
+						if (min[1] === -this.score) return min;
 
 					}
 				}
