@@ -132,7 +132,6 @@
 			this.score = 100000;
 			this.round = 0;
 			this.winners = [];
-			this.leaves = 0;
 
 			this.init();
 		}
@@ -235,7 +234,6 @@
 				setTimeout(() => {
 					this.leaves = 0;
 					const aiMove = this.maximize(this.board, this.depth, true);
-					console.log(this.leaves);
 					window.sleep(700).then(() => {
 						window.modalClose();
 						window.sleep(300).then(() => this.place(aiMove[0]));
@@ -245,7 +243,6 @@
 		}
 
 		maximize(board, depth, firstLayer) {
-			this.leaves++;
 			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const max = [null, -99999];
@@ -256,7 +253,7 @@
 					if (max[0] === null || nextMove[1] > max[1]) {
 						max[0] = column;
 						[, max[1]] = nextMove;
-						if (max[1] && !firstLayer === this.score) return max;
+						if (max[1] === this.score && !firstLayer) return max;
 					}
 				}
 			}
@@ -264,7 +261,6 @@
 		}
 
 		minimize(board, depth) {
-			this.leaves++;
 			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const min = [null, 99999];
