@@ -131,6 +131,9 @@
 			this.depth = depth;
 			this.score = 100000;
 			this.round = 0;
+			this.firstMove = true;
+			this.secondMove = false;
+			this.lastHumanMove = null;
 			this.winners = [];
 
 			this.init();
@@ -160,14 +163,17 @@
 				document.getElementById("uiBlocker").style.display = "block";
 				const element = e.target || window.event.srcElement;
 				if (this.round == 0) this.place(element.cellIndex);
-				if (this.round == 1) this.generateComputerDecision();
+				this.humanMove = element.cellIndex;
+				window.sleep(800).then(() => {
+					if (this.round == 1) this.generateComputerDecision();
+				});
 			}
 		}
 
 		static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
 			if (currentRow === inputRow) {
 				if (!gameOver && !moveTurn) {
-					window.sleep(150).then(() => {
+					window.sleep(75).then(() => {
 						window.modalOpen("Thinking...");
 					});
 				}
@@ -191,8 +197,7 @@
 		}
 
 		place(column) {
-			const thisScore = this.board.evaluateScore();
-			if (thisScore != this.score && thisScore != -this.score && !this.board.isFull()) {
+			if (gameStarted && !gameOver) {
 				for (let y = this.rows - 1; y >= 0; y--) {
 					const td = document.getElementById("gameBoard").rows[y].cells[column];
 					if (td.classList.contains("empty")) {
@@ -228,17 +233,46 @@
 			return null;
 		}
 
+		getFirstMove() {
+			this.firstMove = false;
+			this.secondMove = true;
+			switch (this.humanMove) {
+				case (2):
+				case (4):
+					return [3];
+				case (3):
+					return [2];
+				default:
+					return this.humanMove + 1 < 5 ? [this.humanMove + 1] : [this.humanMove - 1];
+			}
+		}
+
+		getSecondMove() {
+			this.secondMove = false;
+			switch (this.humanMove) {
+				case (2):
+				case (3):
+				case (4):
+					return [3];
+				default:
+					return [this.humanMove];
+			}
+		}
+
 		generateComputerDecision() {
-			const thisScore = this.board.evaluateScore();
-			if (thisScore != this.score && thisScore != -this.score && !this.board.isFull()) {
-				setTimeout(() => {
-					this.leaves = 0;
-					const aiMove = this.maximize(this.board, this.depth);
-					window.sleep(700).then(() => {
+			if (gameStarted && !gameOver) {
+				this.leaves = 0;
+				const [aiMove] = this.firstMove ? this.getFirstMove() : this.secondMove ? this.getSecondMove() : this.maximize(this.board, this.depth, 1);
+				if (this.firstMove || this.secondMove) {
+					window.sleep(250).then(() => {
 						window.modalClose();
-						window.sleep(300).then(() => this.place(aiMove[0]));
+						window.sleep(25).then(() => this.place(aiMove));
 					});
-				}, 1000);
+				} else {
+					window.modalClose();
+					window.sleep(25).then(() => this.place(aiMove));
+				}
+
 			}
 		}
 
