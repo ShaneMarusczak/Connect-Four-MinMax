@@ -131,9 +131,8 @@
 			this.depth = depth;
 			this.score = 100000;
 			this.round = 0;
-			this.firstMove = true;
-			this.secondMove = false;
 			this.lastHumanMove = null;
+			this.humanMovesTaken = 0;
 			this.winners = [];
 
 			this.init();
@@ -164,6 +163,7 @@
 				const element = e.target || window.event.srcElement;
 				if (this.round == 0) this.place(element.cellIndex);
 				this.humanMove = element.cellIndex;
+				this.humanMovesTaken++;
 				window.sleep(800).then(() => {
 					if (this.round == 1) this.generateComputerDecision();
 				});
@@ -177,16 +177,19 @@
 						window.modalOpen("Thinking...");
 					});
 				}
+				if (!gameOver && moveTurn) {
+					document.getElementById("uiBlocker").style.display = "none";
+				}
 				document.getElementById("td" + currentRow + inputCol).className = moveTurn ? "coin cpu-coin" : "coin human-coin";
 				return;
 			}
 			document.getElementById("td" + currentRow + inputCol).classList.add("coin");
 			document.getElementById("td" + currentRow + inputCol).classList.add(moveTurn ? "cpu-coin" : "human-coin");
-			window.sleep(120).then(() => {
+			window.sleep(100).then(() => {
 				document.getElementById("td" + currentRow + inputCol).classList.remove("coin");
 				document.getElementById("td" + currentRow + inputCol).classList.remove(moveTurn ? "cpu-coin" : "human-coin");
 			});
-			window.sleep(125).then(() => {
+			window.sleep(100).then(() => {
 				Game.animateDrop({
 					"currentRow": currentRow + 1,
 					inputCol,
@@ -206,12 +209,6 @@
 								"inputCol": column,
 								"inputRow": y,
 								"moveTurn": true
-							});
-							window.sleep(y * 125).then(() => {
-								td.className = "coin cpu-coin";
-								window.sleep(200).then(() => {
-									document.getElementById("uiBlocker").style.display = "none";
-								});
 							});
 						} else {
 							Game.animateDrop({
@@ -233,46 +230,14 @@
 			return null;
 		}
 
-		getFirstMove() {
-			this.firstMove = false;
-			this.secondMove = true;
-			switch (this.humanMove) {
-				case (2):
-				case (4):
-					return [3];
-				case (3):
-					return [2];
-				default:
-					return this.humanMove + 1 < 5 ? [this.humanMove + 1] : [this.humanMove - 1];
-			}
-		}
-
-		getSecondMove() {
-			this.secondMove = false;
-			switch (this.humanMove) {
-				case (2):
-				case (3):
-				case (4):
-					return [3];
-				default:
-					return [this.humanMove];
-			}
-		}
-
 		generateComputerDecision() {
 			if (gameStarted && !gameOver) {
 				this.leaves = 0;
-				const [aiMove] = this.firstMove ? this.getFirstMove() : this.secondMove ? this.getSecondMove() : this.maximize(this.board, this.depth, 1);
-				if (this.firstMove || this.secondMove) {
-					window.sleep(250).then(() => {
-						window.modalClose();
-						window.sleep(25).then(() => this.place(aiMove));
-					});
-				} else {
+				const [aiMove] = this.maximize(this.board, this.depth);
+				window.sleep(325 * (6 / Number(this.depth))).then(() => {
 					window.modalClose();
-					window.sleep(25).then(() => this.place(aiMove));
-				}
-
+					window.sleep(100).then(() => this.place(aiMove));
+				});
 			}
 		}
 
