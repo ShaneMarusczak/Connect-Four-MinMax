@@ -1,9 +1,6 @@
 /*eslint-disable max-classes-per-file */
 "use strict";
 (() => {
-	let gameStarted = false;
-	let gameOver = false;
-
 	class Board {
 		constructor(game, fieldOfPlay, player) {
 			this.game = game;
@@ -26,7 +23,7 @@
 						break;
 					}
 				}
-				this.player = this.game.switchRound(this.player);
+				this.player = Game.switchRound(this.player);
 				return true;
 			} else {
 				return false;
@@ -134,6 +131,8 @@
 			this.lastHumanMove = null;
 			this.humanMovesTaken = 0;
 			this.winners = [];
+			this.gameStarted = false;
+			this.gameOver = false;
 
 			this.init();
 		}
@@ -158,7 +157,7 @@
 		}
 
 		move(e) {
-			if (gameStarted && !gameOver) {
+			if (this.gameStarted && !this.gameOver) {
 				document.getElementById("uiBlocker").style.display = "block";
 				const element = e.target || window.event.srcElement;
 				if (this.round == 0) this.place(element.cellIndex);
@@ -172,12 +171,12 @@
 
 		static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
 			if (currentRow === inputRow) {
-				if (!gameOver && !moveTurn) {
+				if (!this.gameOver && !moveTurn) {
 					window.sleep(75).then(() => {
 						window.modalOpen("Thinking...");
 					});
 				}
-				if (!gameOver && moveTurn) {
+				if (!this.gameOver && moveTurn) {
 					document.getElementById("uiBlocker").style.display = "none";
 				}
 				document.getElementById("td" + currentRow + inputCol).className = moveTurn ? "coin cpu-coin" : "coin human-coin";
@@ -200,7 +199,7 @@
 		}
 
 		place(column) {
-			if (gameStarted && !gameOver) {
+			if (this.gameStarted && !this.gameOver) {
 				for (let y = this.rows - 1; y >= 0; y--) {
 					const td = document.getElementById("gameBoard").rows[y].cells[column];
 					if (td.classList.contains("empty")) {
@@ -224,76 +223,79 @@
 					document.getElementById("uiBlocker").style.display = "none";
 					return alert("Invalid move!");
 				}
-				this.round = this.switchRound(this.round);
+				this.round = Game.switchRound(this.round);
 				this.checkGameOver();
 			}
 			return null;
 		}
 
 		generateComputerDecision() {
-			if (gameStarted && !gameOver) {
+			if (this.gameStarted && !this.gameOver) {
 				this.leaves = 0;
 				const [aiMove] = this.maximize(this.board, this.depth);
-				window.sleep(400 * (6 / Number(this.depth))).then(() => {
+				window.sleep(325 * (14 / Number(this.depth))).then(() => {
 					window.modalClose();
 					window.sleep(100).then(() => this.place(aiMove));
 				});
 			}
 		}
 
-		maximize(board, depth) {
+		maximize(board, depth, alpha, beta) {
 			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const max = [null, -99999];
 			for (let column = 0; column < this.columns; column++) {
 				const newBoard = board.getBoardCopy();
 				if (newBoard.place(column)) {
-					const nextMove = this.minimize(newBoard, depth - 1);
+					const nextMove = this.minimize(newBoard, depth - 1, alpha, beta);
 					if (max[0] === null || nextMove[1] > max[1]) {
 						max[0] = column;
 						[, max[1]] = nextMove;
+						[, alpha] = nextMove;
 					}
+					if (alpha >= beta) return max;
 				}
 			}
 			return max;
 		}
 
-		minimize(board, depth) {
+		minimize(board, depth, alpha, beta) {
 			const score = board.evaluateScore();
 			if (board.isFinished(depth, score)) return [null, score];
 			const min = [null, 99999];
 			for (let column = 0; column < this.columns; column++) {
 				const newBoard = board.getBoardCopy();
 				if (newBoard.place(column)) {
-					const nextMove = this.maximize(newBoard, depth - 1);
+					const nextMove = this.maximize(newBoard, depth - 1, alpha, beta);
 					if (min[0] === null || nextMove[1] < min[1]) {
 						min[0] = column;
 						[, min[1]] = nextMove;
+						[, beta] = nextMove;
 					}
+					if (alpha >= beta) return min;
 				}
 			}
 			return min;
 		}
 
-		//eslint-disable-next-line class-methods-use-this
-		switchRound(round) {
+		static switchRound(round) {
 			return round == 0 ? 1 : 0;
 		}
 
 		checkGameOver() {
 			const thisScore = this.board.evaluateScore();
 			if (thisScore == -this.score) {
-				gameOver = true;
+				this.gameOver = true;
 				window.modal("You Win!", 2000);
 				document.getElementById("uiBlocker").style.display = "none";
 				window.sleep(1000).then(() => this.winnersColorChange());
 			} else if (thisScore == this.score) {
-				gameOver = true;
+				this.gameOver = true;
 				window.modal("You Lose!", 2000);
 				document.getElementById("uiBlocker").style.display = "none";
 				window.sleep(1000).then(() => this.winnersColorChange());
 			} else if (this.board.isFull()) {
-				gameOver = true;
+				this.gameOver = true;
 				document.getElementById("uiBlocker").style.display = "none";
 				window.modal("Draw!", 2000);
 			}
@@ -309,7 +311,7 @@
 	}
 
 	function hoverOverCollumnHighLight(e) {
-		if (!gameOver) {
+		if (!this.gameOver) {
 			const col = Number(e.target.id.substring(3));
 			document.getElementById("fc" + col).classList.add("bounce");
 			for (let y = 5; y >= 0; y--) {
@@ -332,11 +334,11 @@
 		}
 	}
 
-	function start() {
-		gameStarted = true;
+	const start = () => {
+		this.gameStarted = true;
 		document.getElementById("difficulty").disabled = true;
 		window.Game = new Game(Array.from(document.getElementById("difficulty").options).find(d => d.selected).value);
-	}
+	};
 
 	(() => {
 		document.getElementById("start").addEventListener("click", start);
