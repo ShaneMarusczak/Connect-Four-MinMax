@@ -131,7 +131,6 @@
 			this.lastHumanMove = null;
 			this.humanMovesTaken = 0;
 			this.winners = [];
-			this.gameStarted = false;
 			this.gameOver = false;
 
 			this.init();
@@ -157,7 +156,7 @@
 		}
 
 		move(e) {
-			if (this.gameStarted && !this.gameOver) {
+			if (!this.gameOver) {
 				document.getElementById("uiBlocker").style.display = "block";
 				const element = e.target || window.event.srcElement;
 				if (this.round == 0) this.place(element.cellIndex);
@@ -199,7 +198,7 @@
 		}
 
 		place(column) {
-			if (this.gameStarted && !this.gameOver) {
+			if (!this.gameOver) {
 				for (let y = this.rows - 1; y >= 0; y--) {
 					const td = document.getElementById("gameBoard").rows[y].cells[column];
 					if (td.classList.contains("empty")) {
@@ -230,7 +229,7 @@
 		}
 
 		generateComputerDecision() {
-			if (this.gameStarted && !this.gameOver) {
+			if (!this.gameOver) {
 				this.leaves = 0;
 				const [aiMove] = this.maximize(this.board, this.depth);
 				window.sleep(325 * (14 / Number(this.depth))).then(() => {
@@ -335,7 +334,6 @@
 	}
 
 	const start = () => {
-		this.gameStarted = true;
 		document.getElementById("difficulty").disabled = true;
 		window.Game = new Game(Array.from(document.getElementById("difficulty").options).find(d => d.selected).value);
 	};
