@@ -234,7 +234,7 @@
 			if (gameStarted && !gameOver) {
 				this.leaves = 0;
 				const [aiMove] = this.maximize(this.board, this.depth);
-				window.sleep(325 * (6 / Number(this.depth))).then(() => {
+				window.sleep(400 * (6 / Number(this.depth))).then(() => {
 					window.modalClose();
 					window.sleep(100).then(() => this.place(aiMove));
 				});
