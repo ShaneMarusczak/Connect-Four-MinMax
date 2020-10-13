@@ -269,7 +269,6 @@
 					if (min[0] === null || nextMove[1] < min[1]) {
 						min[0] = column;
 						[, min[1]] = nextMove;
-						if (min[1] === -this.score) return min;
 					}
 				}
 			}
