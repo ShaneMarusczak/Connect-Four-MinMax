@@ -15,7 +15,7 @@
 			return false;
 		}
 
-		place(column) {
+		canPlace(column) {
 			if (this.fieldOfPlay[0][column] === null && column >= 0 && column < this.game.columns) {
 				for (let y = this.game.rows - 1; y >= 0; y--) {
 					if (this.fieldOfPlay[y][column] === null) {
@@ -128,8 +128,6 @@
 			this.depth = depth;
 			this.score = 100000;
 			this.round = 0;
-			this.lastHumanMove = null;
-			this.humanMovesTaken = 0;
 			this.winners = [];
 			this.gameOver = false;
 
@@ -159,9 +157,7 @@
 			if (!this.gameOver) {
 				document.getElementById("uiBlocker").style.display = "block";
 				const element = e.target || window.event.srcElement;
-				if (this.round == 0) this.place(element.cellIndex);
-				this.humanMove = element.cellIndex;
-				this.humanMovesTaken++;
+				if (this.round == 0) this.playCoin(element.cellIndex);
 				window.sleep(800).then(() => {
 					if (this.round == 1) this.generateComputerDecision();
 				});
@@ -197,7 +193,7 @@
 			});
 		}
 
-		place(column) {
+		playCoin(column) {
 			if (!this.gameOver) {
 				for (let y = this.rows - 1; y >= 0; y--) {
 					const td = document.getElementById("gameBoard").rows[y].cells[column];
@@ -218,7 +214,7 @@
 						break;
 					}
 				}
-				if (!this.board.place(column)) {
+				if (!this.board.canPlace(column)) {
 					document.getElementById("uiBlocker").style.display = "none";
 					return alert("Invalid move!");
 				}
@@ -230,11 +226,10 @@
 
 		generateComputerDecision() {
 			if (!this.gameOver) {
-				this.leaves = 0;
 				const [aiMove] = this.maximize(this.board, this.depth);
 				window.sleep(325 * (14 / Number(this.depth))).then(() => {
 					window.modalClose();
-					window.sleep(100).then(() => this.place(aiMove));
+					window.sleep(100).then(() => this.playCoin(aiMove));
 				});
 			}
 		}
@@ -245,7 +240,7 @@
 			const max = [null, -99999];
 			for (let column = 0; column < this.columns; column++) {
 				const newBoard = board.getBoardCopy();
-				if (newBoard.place(column)) {
+				if (newBoard.canPlace(column)) {
 					const nextMove = this.minimize(newBoard, depth - 1, alpha, beta);
 					if (max[0] === null || nextMove[1] > max[1]) {
 						max[0] = column;
@@ -264,7 +259,7 @@
 			const min = [null, 99999];
 			for (let column = 0; column < this.columns; column++) {
 				const newBoard = board.getBoardCopy();
-				if (newBoard.place(column)) {
+				if (newBoard.canPlace(column)) {
 					const nextMove = this.maximize(newBoard, depth - 1, alpha, beta);
 					if (min[0] === null || nextMove[1] < min[1]) {
 						min[0] = column;
