@@ -1,6 +1,8 @@
 /*eslint-disable max-classes-per-file */
 "use strict";
 (() => {
+	let gameOver = false;
+	let animationMode = false;
 	class Board {
 		constructor(game, fieldOfPlay, player) {
 			this.game = game;
@@ -129,7 +131,6 @@
 			this.score = 100000;
 			this.round = 0;
 			this.winners = [];
-			this.gameOver = false;
 
 			this.init();
 		}
@@ -154,7 +155,7 @@
 		}
 
 		move(e) {
-			if (!this.gameOver) {
+			if (!gameOver) {
 				document.getElementById("uiBlocker").style.display = "block";
 				const element = e.target || window.event.srcElement;
 				if (this.round == 0) this.playCoin(element.cellIndex);
@@ -166,17 +167,19 @@
 
 		static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
 			if (currentRow === inputRow) {
-				if (!this.gameOver && !moveTurn) {
+				if (!gameOver && !moveTurn) {
 					window.sleep(75).then(() => {
 						window.modalOpen("Thinking...");
 					});
 				}
-				if (!this.gameOver && moveTurn) {
+				if (!gameOver && moveTurn) {
 					document.getElementById("uiBlocker").style.display = "none";
+					animationMode = false;
 				}
 				document.getElementById("td" + currentRow + inputCol).className = moveTurn ? "coin cpu-coin" : "coin human-coin";
 				return;
 			}
+			animationMode = true;
 			document.getElementById("td" + currentRow + inputCol).classList.add("coin");
 			document.getElementById("td" + currentRow + inputCol).classList.add(moveTurn ? "cpu-coin" : "human-coin");
 			window.sleep(100).then(() => {
@@ -194,7 +197,7 @@
 		}
 
 		playCoin(column) {
-			if (!this.gameOver) {
+			if (!gameOver) {
 				for (let y = this.rows - 1; y >= 0; y--) {
 					const td = document.getElementById("gameBoard").rows[y].cells[column];
 					if (td.classList.contains("empty")) {
@@ -225,7 +228,7 @@
 		}
 
 		generateComputerDecision() {
-			if (!this.gameOver) {
+			if (!gameOver) {
 				const [aiMove] = this.maximize(this.board, this.depth);
 				window.sleep(325 * (14 / Number(this.depth))).then(() => {
 					window.modalClose();
@@ -279,17 +282,17 @@
 		checkGameOver() {
 			const thisScore = this.board.evaluateScore();
 			if (thisScore == -this.score) {
-				this.gameOver = true;
+				gameOver = true;
 				window.modal("You Win!", 2000);
 				document.getElementById("uiBlocker").style.display = "none";
 				window.sleep(1000).then(() => this.winnersColorChange());
 			} else if (thisScore == this.score) {
-				this.gameOver = true;
+				gameOver = true;
 				window.modal("You Lose!", 2000);
 				document.getElementById("uiBlocker").style.display = "none";
 				window.sleep(1000).then(() => this.winnersColorChange());
 			} else if (this.board.isFull()) {
-				this.gameOver = true;
+				gameOver = true;
 				document.getElementById("uiBlocker").style.display = "none";
 				window.modal("Draw!", 2000);
 			}
@@ -305,7 +308,7 @@
 	}
 
 	function hoverOverCollumnHighLight(e) {
-		if (!this.gameOver) {
+		if (!gameOver && !animationMode) {
 			const col = Number(e.target.id.substring(3));
 			document.getElementById("fc" + col).classList.add("bounce");
 			for (let y = 5; y >= 0; y--) {
