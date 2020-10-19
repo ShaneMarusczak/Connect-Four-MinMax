@@ -9,9 +9,10 @@
     <title>Connect Four</title>
     <link rel="stylesheet" href="css/style.min.css" />
     <link
-      rel="stylesheet"
+      rel="preload"
       type="text/css"
       href="https://marusczak.com/BuildingBlocks/css/modalAnimation.min.css"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
   </head>
   <div id="uiBlocker"></div>
@@ -70,14 +71,16 @@
       type="text/javascript"
       src="https://marusczak.com/BuildingBlocks/js/buildingBlocks.min.js"
     ></script>
+    <script src="js/connect-four.min.js"></script>
     <script
       type="text/javascript"
       src="https://marusczak.com/BuildingBlocks/js/noTimeModal.min.js"
+      defer
     ></script>
     <script
       type="text/javascript"
       src="https://marusczak.com/BuildingBlocks/js/modal.min.js"
+      defer
     ></script>
-    <script src="js/connect-four.min.js"></script>
   </body>
 </html>
