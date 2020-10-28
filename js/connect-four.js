@@ -171,7 +171,7 @@
 
     move(e) {
       if (!gameOver) {
-        document.getElementById("uiBlocker").style.display = "block";
+        document.getElementById("uiBlocker").classList.add("block");
         const element = e.target || window.event.srcElement;
         if (this.round == 0) this.playCoin(element.cellIndex);
         window.sleep(800).then(() => {
@@ -186,9 +186,16 @@
           window.sleep(75).then(() => {
             window.modalOpen("Thinking...");
           });
+          document
+            .getElementsByTagName("html")[0]
+            .classList.add("progresCursor");
         }
         if (!gameOver && moveTurn) {
-          document.getElementById("uiBlocker").style.display = "none";
+          document.getElementById("uiBlocker").classList.remove("block");
+          document
+            .getElementsByTagName("html")[0]
+            .classList.remove("progresCursor");
+
           animationMode = false;
         }
         document.getElementById(
@@ -243,7 +250,7 @@
           }
         }
         if (!this.board.canPlace(column)) {
-          document.getElementById("uiBlocker").style.display = "none";
+          document.getElementById("uiBlocker").classList.remove("block");
           return alert("Invalid move!");
         }
         this.round = Game.switchRound(this.round);
@@ -315,16 +322,16 @@
       if (thisScore == -this.score) {
         gameOver = true;
         window.modal("You Win!", 2000);
-        document.getElementById("uiBlocker").style.display = "none";
+        document.getElementById("uiBlocker").classList.remove("block");
         window.sleep(1000).then(() => this.winnersColorChange());
       } else if (thisScore == this.score) {
         gameOver = true;
         window.modal("You Lose!", 2000);
-        document.getElementById("uiBlocker").style.display = "none";
+        document.getElementById("uiBlocker").classList.remove("block");
         window.sleep(1000).then(() => this.winnersColorChange());
       } else if (this.board.isFull()) {
         gameOver = true;
-        document.getElementById("uiBlocker").style.display = "none";
+        document.getElementById("uiBlocker").classList.remove("block");
         window.modal("Draw!", 2000);
       }
     }
