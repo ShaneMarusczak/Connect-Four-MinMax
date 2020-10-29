@@ -337,6 +337,6 @@ select {
   display: block !important;
 }
 
-.progresCursor {
+.progressCursor {
   cursor: progress;
 }

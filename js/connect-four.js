@@ -188,14 +188,10 @@
           });
           document
             .getElementsByTagName("html")[0]
-            .classList.add("progresCursor");
+            .classList.add("progressCursor");
         }
-        if (!gameOver && moveTurn) {
+        if (moveTurn) {
           document.getElementById("uiBlocker").classList.remove("block");
-          document
-            .getElementsByTagName("html")[0]
-            .classList.remove("progresCursor");
-
           animationMode = false;
         }
         document.getElementById(
@@ -320,20 +316,24 @@
     checkGameOver() {
       const thisScore = this.board.evaluateScore();
       if (thisScore == -this.score) {
-        gameOver = true;
-        window.modal("You Win!", 2000);
-        document.getElementById("uiBlocker").classList.remove("block");
-        window.sleep(1000).then(() => this.winnersColorChange());
+        this.gameOverHelper("You Win!");
       } else if (thisScore == this.score) {
-        gameOver = true;
-        window.modal("You Lose!", 2000);
-        document.getElementById("uiBlocker").classList.remove("block");
-        window.sleep(1000).then(() => this.winnersColorChange());
+        this.gameOverHelper("You Lose!");
       } else if (this.board.isFull()) {
         gameOver = true;
-        document.getElementById("uiBlocker").classList.remove("block");
         window.modal("Draw!", 2000);
       }
+      document
+        .getElementsByTagName("html")[0]
+        .classList.remove("progressCursor");
+    }
+
+    gameOverHelper(message) {
+      gameOver = true;
+      window.sleep(1000).then(() => {
+        window.modal(message, 2000);
+        this.winnersColorChange();
+      });
     }
 
     winnersColorChange() {
