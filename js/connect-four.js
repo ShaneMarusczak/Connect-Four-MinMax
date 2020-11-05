@@ -326,6 +326,7 @@
       document
         .getElementsByTagName("html")[0]
         .classList.remove("progressCursor");
+      document.getElementById("uiBlocker").classList.remove("block");
     }
 
     gameOverHelper(message) {
