@@ -330,8 +330,8 @@
 
     gameOverHelper(message) {
       gameOver = true;
-      window.sleep(500).then(() => {
-        window.modal(message, 2000);
+      window.modal(message, 2000);
+      window.sleep(1000).then(() => {
         this.winnersColorChange();
       });
     }
