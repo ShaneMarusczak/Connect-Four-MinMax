@@ -326,12 +326,11 @@
       document
         .getElementsByTagName("html")[0]
         .classList.remove("progressCursor");
-      document.getElementById("uiBlocker").classList.remove("block");
     }
 
     gameOverHelper(message) {
       gameOver = true;
-      window.sleep(1000).then(() => {
+      window.sleep(500).then(() => {
         window.modal(message, 2000);
         this.winnersColorChange();
       });
