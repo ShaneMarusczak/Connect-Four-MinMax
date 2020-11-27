@@ -174,6 +174,9 @@
         document.getElementById("uiBlocker").classList.add("block");
         const element = e.target || window.event.srcElement;
         if (this.round == 0) this.playCoin(element.cellIndex);
+        document
+          .getElementById("fc" + element.cellIndex)
+          .classList.remove("bounce");
         window.sleep(800).then(() => {
           if (this.round == 1) this.generateComputerDecision();
         });
