@@ -332,6 +332,7 @@
     }
 
     gameOverHelper(message) {
+      document.getElementById("uiBlocker").classList.remove("block");
       gameOver = true;
       window.modal(message, 2000);
       window.sleep(1000).then(() => {
