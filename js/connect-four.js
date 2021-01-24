@@ -140,6 +140,7 @@
       this.score = 100000;
       this.round = 0;
       this.winners = [];
+      this.turnsTaken = 0;
 
       this.init();
     }
@@ -171,6 +172,7 @@
 
     move(e) {
       if (!gameOver) {
+        this.turnsTaken++;
         document.getElementById("uiBlocker").classList.add("block");
         const element = e.target || window.event.srcElement;
         if (this.round == 0) this.playCoin(element.cellIndex);
@@ -260,7 +262,10 @@
 
     generateComputerDecision() {
       if (!gameOver) {
-        const [aiMove] = this.maximize(this.board, this.depth, true);
+        console.log(this.turnsTaken);
+        let tempDepth =
+          this.depth === 2 ? 2 : this.turnsTaken < 5 ? 4 : this.depth;
+        const [aiMove] = this.maximize(this.board, tempDepth, true);
         window.sleep(325 * (14 / Number(this.depth))).then(() => {
           window.modalClose();
           window.sleep(100).then(() => this.playCoin(aiMove));
