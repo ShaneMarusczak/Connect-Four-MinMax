@@ -264,7 +264,7 @@
       if (!gameOver) {
         let tempDepth =
           this.depth === 2 ? 2 : this.turnsTaken < 5 ? 4 : this.depth;
-        const [aiMove] = this.maximize(this.board, tempDepth, true);
+        const [aiMove] = this.maximize(this.board, tempDepth);
         window.sleep(325 * (14 / Number(this.depth))).then(() => {
           window.modalClose();
           window.sleep(100).then(() => this.playCoin(aiMove));
@@ -272,7 +272,7 @@
       }
     }
 
-    maximize(board, depth, firstCall, alpha, beta) {
+    maximize(board, depth, alpha, beta) {
       const score = board.evaluateScore();
       if (board.isFinished(depth, score)) return [null, score];
       const max = [null, -99999];
@@ -285,7 +285,7 @@
             [, max[1]] = nextMove;
             [, alpha] = nextMove;
           }
-          if (alpha >= beta && !firstCall) return max;
+          if (alpha >= beta) return max;
         }
       }
       return max;
@@ -298,13 +298,7 @@
       for (let column = 0; column < this.columns; column++) {
         const newBoard = board.getBoardCopy();
         if (newBoard.canPlace(column)) {
-          const nextMove = this.maximize(
-            newBoard,
-            depth - 1,
-            false,
-            alpha,
-            beta
-          );
+          const nextMove = this.maximize(newBoard, depth - 1, alpha, beta);
           if (min[0] === null || nextMove[1] < min[1]) {
             min[0] = column;
             [, min[1]] = nextMove;
