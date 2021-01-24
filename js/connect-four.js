@@ -262,7 +262,6 @@
 
     generateComputerDecision() {
       if (!gameOver) {
-        console.log(this.turnsTaken);
         let tempDepth =
           this.depth === 2 ? 2 : this.turnsTaken < 5 ? 4 : this.depth;
         const [aiMove] = this.maximize(this.board, tempDepth, true);
