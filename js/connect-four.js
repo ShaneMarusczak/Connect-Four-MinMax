@@ -262,13 +262,23 @@
 
     generateComputerDecision() {
       if (!gameOver) {
-        let tempDepth =
-          this.depth === 2 ? 2 : this.turnsTaken < 5 ? 4 : this.depth;
-        const [aiMove] = this.maximize(this.board, tempDepth);
+        const [aiMove] = this.maximize(this.board, this.getDepth());
         window.sleep(325 * (14 / Number(this.depth))).then(() => {
           window.modalClose();
           window.sleep(100).then(() => this.playCoin(aiMove));
         });
+      }
+    }
+
+    getDepth() {
+      if (this.depth === 2) {
+        return 2;
+      } else if (this.turnsTaken < 2) {
+        return 4;
+      } else if (this.turnsTaken < 5) {
+        return 6;
+      } else {
+        return this.depth;
       }
     }
 
