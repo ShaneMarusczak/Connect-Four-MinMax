@@ -3,7 +3,6 @@
 (() => {
   let gameOver = false;
   let animationMode = false;
-  let depthTwoMoves = [];
   class Board {
     constructor(game, fieldOfPlay, player) {
       this.game = game;
@@ -261,36 +260,9 @@
       return null;
     }
 
-    playerHasWin() {
-      let hasWin = false;
-      let score = -10000000;
-      let moveToReturn = -1;
-      for (let move of depthTwoMoves) {
-        if (move[1] === -this.score) {
-          hasWin = true;
-          break;
-        }
-      }
-      if (hasWin) {
-        for (let move of depthTwoMoves) {
-          if (move[1] > score) {
-            score = move[1];
-            moveToReturn = depthTwoMoves.indexOf(move);
-          }
-        }
-      }
-      return moveToReturn;
-    }
-
     generateComputerDecision() {
       if (!gameOver) {
-        depthTwoMoves = [];
-        this.maximize(this.board, 2, true);
-        const blockingPlay = this.playerHasWin();
-        const aiMove =
-          blockingPlay !== -1
-            ? blockingPlay
-            : this.maximize(this.board, this.getDepth(), false)[0];
+        const [aiMove] = this.maximize(this.board, this.getDepth());
         window.sleep(325 * (14 / Number(this.depth))).then(() => {
           window.modalClose();
           window.sleep(100).then(() => this.playCoin(aiMove));
@@ -310,7 +282,7 @@
       }
     }
 
-    maximize(board, depth, dumpMoves, alpha, beta) {
+    maximize(board, depth, alpha, beta) {
       const score = board.evaluateScore();
       if (board.isFinished(depth, score)) return [null, score];
       const max = [null, -99999];
@@ -322,9 +294,6 @@
             max[0] = column;
             [, max[1]] = nextMove;
             [, alpha] = nextMove;
-          }
-          if (dumpMoves) {
-            depthTwoMoves.push(nextMove);
           }
           if (alpha >= beta) return max;
         }
@@ -339,13 +308,7 @@
       for (let column = 0; column < this.columns; column++) {
         const newBoard = board.getBoardCopy();
         if (newBoard.canPlace(column)) {
-          const nextMove = this.maximize(
-            newBoard,
-            depth - 1,
-            false,
-            alpha,
-            beta
-          );
+          const nextMove = this.maximize(newBoard, depth - 1, alpha, beta);
           if (min[0] === null || nextMove[1] < min[1]) {
             min[0] = column;
             [, min[1]] = nextMove;
