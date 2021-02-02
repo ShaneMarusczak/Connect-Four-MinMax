@@ -2,11 +2,12 @@
 "use strict";
 (() => {
   let gameOver = false;
+  let gameStarted = false;
   let animationMode = false;
   class Board {
-    constructor(game, fieldOfPlay, player) {
+    constructor(game, gameBoardArray, player) {
       this.game = game;
-      this.fieldOfPlay = fieldOfPlay;
+      this.gameBoardArray = gameBoardArray;
       this.player = player;
     }
 
@@ -22,19 +23,38 @@
       return false;
     }
 
+    columnIsFull(col) {
+      for (let y = this.game.rows - 1; y >= 0; y--) {
+        if (this.gameBoardArray[y][col] === null) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    placeInColumnForQuickMove(col, playerValue) {
+      for (let y = this.game.rows - 1; y >= 0; y--) {
+        if (this.gameBoardArray[y][col] === null) {
+          this.gameBoardArray[y][col] = playerValue;
+          break;
+        }
+      }
+    }
+
     canPlace(column) {
       if (
-        this.fieldOfPlay[0][column] === null &&
+        this.gameBoardArray[0][column] === null &&
         column >= 0 &&
         column < this.game.columns
       ) {
         for (let y = this.game.rows - 1; y >= 0; y--) {
-          if (this.fieldOfPlay[y][column] === null) {
-            this.fieldOfPlay[y][column] = this.player;
+          if (this.gameBoardArray[y][column] === null) {
+            this.gameBoardArray[y][column] = this.player;
             break;
           }
         }
         this.player = Game.switchRound(this.player);
+
         return true;
       } else {
         return false;
@@ -50,10 +70,10 @@
       this.game.winningArrayCpu = [];
 
       for (let i = 0; i < 4; i++) {
-        if (this.fieldOfPlay[internalRow][internalCol] == 0) {
+        if (this.gameBoardArray[internalRow][internalCol] == 0) {
           this.game.winningArrayHuman.push([internalRow, internalCol]);
           humanPoints++;
-        } else if (this.fieldOfPlay[internalRow][internalCol] == 1) {
+        } else if (this.gameBoardArray[internalRow][internalCol] == 1) {
           this.game.winningArrayCpu.push([internalRow, internalCol]);
           computerPoints++;
         }
@@ -72,7 +92,6 @@
     }
 
     evaluateScore() {
-      let points = 0;
       let verticalPoints = 0;
       let horizontalPoints = 0;
       let diagonalPoints1 = 0;
@@ -109,14 +128,14 @@
           diagonalPoints2 = diagonalPoints2 + score;
         }
       }
-      points =
-        horizontalPoints + verticalPoints + diagonalPoints1 + diagonalPoints2;
-      return points;
+      return (
+        horizontalPoints + verticalPoints + diagonalPoints1 + diagonalPoints2
+      );
     }
 
     isFull() {
       for (let i = 0; i < this.game.columns; i++) {
-        if (this.fieldOfPlay[0][i] === null) {
+        if (this.gameBoardArray[0][i] === null) {
           return false;
         }
       }
@@ -125,8 +144,8 @@
 
     getBoardCopy() {
       const newBoard = [];
-      for (let i = 0; i < this.fieldOfPlay.length; i++) {
-        newBoard.push(this.fieldOfPlay[i].slice());
+      for (let i = 0; i < this.gameBoardArray.length; i++) {
+        newBoard.push(this.gameBoardArray[i].slice());
       }
       return new Board(this.game, newBoard, this.player);
     }
@@ -260,9 +279,37 @@
       return null;
     }
 
+    quickMove() {
+      for (let column = 0; column < this.columns; column++) {
+        const newBoard = this.board.getBoardCopy();
+        if (!newBoard.columnIsFull(column)) {
+          newBoard.placeInColumnForQuickMove(column, 1);
+          if (newBoard.evaluateScore() === 100000) {
+            return column;
+          }
+        }
+      }
+      for (let column = 0; column < this.columns; column++) {
+        const newBoard = this.board.getBoardCopy();
+        if (!newBoard.columnIsFull(column)) {
+          newBoard.placeInColumnForQuickMove(column, 0);
+          if (newBoard.evaluateScore() === -100000) {
+            return column;
+          }
+        }
+      }
+      return -1;
+    }
+
     generateComputerDecision() {
       if (!gameOver) {
-        const [aiMove] = this.maximize(this.board, this.getDepth());
+        let aiMove = 0;
+        const quickMove = this.quickMove();
+        if (quickMove !== -1) {
+          aiMove = quickMove;
+        } else {
+          [aiMove] = this.maximize(this.board, this.getDepth());
+        }
         window.sleep(325 * (14 / Number(this.depth))).then(() => {
           window.modalClose();
           window.sleep(100).then(() => this.playCoin(aiMove));
@@ -388,12 +435,15 @@
   }
 
   const start = () => {
-    document.getElementById("difficulty").disabled = true;
-    window.Game = new Game(
-      Array.from(document.getElementById("difficulty").options).find(
-        (d) => d.selected
-      ).value
-    );
+    if (!gameStarted) {
+      gameStarted = true;
+      document.getElementById("difficulty").disabled = true;
+      window.Game = new Game(
+        Array.from(document.getElementById("difficulty").options).find(
+          (d) => d.selected
+        ).value
+      );
+    }
   };
 
   (() => {
