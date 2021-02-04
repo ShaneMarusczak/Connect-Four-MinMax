@@ -1,4 +1,3 @@
-/*eslint-disable max-classes-per-file */
 "use strict";
 (() => {
   let gameOver = false;
@@ -13,9 +12,9 @@
 
     isFinished(depth, score) {
       if (
-        depth == 0 ||
-        score == this.game.score ||
-        score == -this.game.score ||
+        depth === 0 ||
+        score === this.game.score ||
+        score === -this.game.score ||
         this.isFull()
       ) {
         return true;
@@ -53,7 +52,7 @@
             break;
           }
         }
-        this.player = Game.switchRound(this.player);
+        this.player = this.player === 0 ? 1 : 0;
 
         return true;
       } else {
@@ -70,20 +69,20 @@
       this.game.winningArrayCpu = [];
 
       for (let i = 0; i < 4; i++) {
-        if (this.gameBoardArray[internalRow][internalCol] == 0) {
+        if (this.gameBoardArray[internalRow][internalCol] === 0) {
           this.game.winningArrayHuman.push([internalRow, internalCol]);
           humanPoints++;
-        } else if (this.gameBoardArray[internalRow][internalCol] == 1) {
+        } else if (this.gameBoardArray[internalRow][internalCol] === 1) {
           this.game.winningArrayCpu.push([internalRow, internalCol]);
           computerPoints++;
         }
         internalRow = internalRow + deltaY;
         internalCol = internalCol + deltaX;
       }
-      if (humanPoints == 4) {
+      if (humanPoints === 4) {
         this.game.winners = this.game.winningArrayHuman;
         return -this.game.score;
-      } else if (computerPoints == 4) {
+      } else if (computerPoints === 4) {
         this.game.winners = this.game.winningArrayCpu;
         return this.game.score;
       } else {
@@ -99,32 +98,32 @@
       for (let row = 0; row < this.game.rows - 3; row++) {
         for (let column = 0; column < this.game.columns; column++) {
           const score = this.scoreBoard(row, column, 1, 0);
-          if (score == this.game.score) return this.game.score;
-          if (score == -this.game.score) return -this.game.score;
+          if (score === this.game.score) return this.game.score;
+          if (score === -this.game.score) return -this.game.score;
           verticalPoints = verticalPoints + score;
         }
       }
       for (let row = 0; row < this.game.rows; row++) {
         for (let column = 0; column < this.game.columns - 3; column++) {
           const score = this.scoreBoard(row, column, 0, 1);
-          if (score == this.game.score) return this.game.score;
-          if (score == -this.game.score) return -this.game.score;
+          if (score === this.game.score) return this.game.score;
+          if (score === -this.game.score) return -this.game.score;
           horizontalPoints = horizontalPoints + score;
         }
       }
       for (let row = 0; row < this.game.rows - 3; row++) {
         for (let column = 0; column < this.game.columns - 3; column++) {
           const score = this.scoreBoard(row, column, 1, 1);
-          if (score == this.game.score) return this.game.score;
-          if (score == -this.game.score) return -this.game.score;
+          if (score === this.game.score) return this.game.score;
+          if (score === -this.game.score) return -this.game.score;
           diagonalPoints1 = diagonalPoints1 + score;
         }
       }
       for (let row = 3; row < this.game.rows; row++) {
         for (let column = 0; column <= this.game.columns - 4; column++) {
           const score = this.scoreBoard(row, column, -1, +1);
-          if (score == this.game.score) return this.game.score;
-          if (score == -this.game.score) return -this.game.score;
+          if (score === this.game.score) return this.game.score;
+          if (score === -this.game.score) return -this.game.score;
           diagonalPoints2 = diagonalPoints2 + score;
         }
       }
@@ -194,12 +193,12 @@
         this.turnsTaken++;
         document.getElementById("uiBlocker").classList.add("block");
         const element = e.target || window.event.srcElement;
-        if (this.round == 0) this.playCoin(element.cellIndex);
+        if (this.round === 0) this.playCoin(element.cellIndex);
         document
           .getElementById("fc" + element.cellIndex)
           .classList.remove("bounce");
         window.sleep(800).then(() => {
-          if (this.round == 1) this.generateComputerDecision();
+          if (this.round === 1) this.generateComputerDecision();
         });
       }
     }
@@ -253,7 +252,7 @@
         for (let y = this.rows - 1; y >= 0; y--) {
           const td = document.getElementById("gameBoard").rows[y].cells[column];
           if (td.classList.contains("empty")) {
-            if (this.round == 1) {
+            if (this.round === 1) {
               Game.animateDrop({
                 inputCol: column,
                 inputRow: y,
@@ -271,12 +270,12 @@
         }
         if (!this.board.canPlace(column)) {
           document.getElementById("uiBlocker").classList.remove("block");
-          return alert("Invalid move!");
+          window.modal("Invalid move!", 2000);
+          return;
         }
-        this.round = Game.switchRound(this.round);
+        this.round = this.round === 0 ? 1 : 0;
         this.checkGameOver();
       }
-      return null;
     }
 
     quickMove() {
@@ -310,7 +309,7 @@
         } else {
           [aiMove] = this.maximize(this.board, this.getDepth());
         }
-        window.sleep(325 * (14 / Number(this.depth))).then(() => {
+        window.sleep(325 * (14 / Number(this.getDepth()))).then(() => {
           window.modalClose();
           window.sleep(100).then(() => this.playCoin(aiMove));
         });
@@ -318,12 +317,10 @@
     }
 
     getDepth() {
-      if (this.depth === 2) {
-        return 2;
-      } else if (this.turnsTaken < 2) {
-        return 4;
+      if (Number(this.depth) <= 4) {
+        return this.depth;
       } else if (this.turnsTaken < 5) {
-        return 6;
+        return this.depth - 2;
       } else {
         return this.depth;
       }
@@ -367,15 +364,11 @@
       return min;
     }
 
-    static switchRound(round) {
-      return round == 0 ? 1 : 0;
-    }
-
     checkGameOver() {
       const thisScore = this.board.evaluateScore();
-      if (thisScore == -this.score) {
+      if (thisScore === -this.score) {
         this.gameOverHelper("You Win!");
-      } else if (thisScore == this.score) {
+      } else if (thisScore === this.score) {
         this.gameOverHelper("You Lose!");
       } else if (this.board.isFull()) {
         gameOver = true;
