@@ -1,5 +1,6 @@
 "use strict";
 (() => {
+  const scanOrder = [3, 2, 4, 1, 5, 6, 0];
   let gameOver = false;
   let gameStarted = false;
   let animationMode = false;
@@ -330,7 +331,7 @@
       const score = board.evaluateScore();
       if (board.isFinished(depth, score)) return [null, score];
       const max = [null, -99999];
-      for (let column = 0; column < this.columns; column++) {
+      for (let column of scanOrder) {
         const newBoard = board.getBoardCopy();
         if (newBoard.canPlace(column)) {
           const nextMove = this.minimize(newBoard, depth - 1, alpha, beta);
@@ -349,7 +350,7 @@
       const score = board.evaluateScore();
       if (board.isFinished(depth, score)) return [null, score];
       const min = [null, 99999];
-      for (let column = 0; column < this.columns; column++) {
+      for (let column of scanOrder) {
         const newBoard = board.getBoardCopy();
         if (newBoard.canPlace(column)) {
           const nextMove = this.maximize(newBoard, depth - 1, alpha, beta);
