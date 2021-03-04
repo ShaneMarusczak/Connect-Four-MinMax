@@ -198,7 +198,7 @@
         document
           .getElementById("fc" + element.cellIndex)
           .classList.remove("bounce");
-        window.sleep(800).then(() => {
+        window.sleep(700).then(() => {
           if (this.round === 1) this.generateComputerDecision();
         });
       }
@@ -207,7 +207,7 @@
     static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
       if (currentRow === inputRow) {
         if (!gameOver && !moveTurn) {
-          window.sleep(75).then(() => {
+          window.sleep(50).then(() => {
             window.modalOpen("Thinking...");
           });
           document
@@ -230,7 +230,7 @@
       document
         .getElementById("td" + currentRow + inputCol)
         .classList.add(moveTurn ? "cpu-coin" : "human-coin");
-      window.sleep(100).then(() => {
+      window.sleep(90).then(() => {
         document
           .getElementById("td" + currentRow + inputCol)
           .classList.remove("coin");
@@ -238,7 +238,7 @@
           .getElementById("td" + currentRow + inputCol)
           .classList.remove(moveTurn ? "cpu-coin" : "human-coin");
       });
-      window.sleep(100).then(() => {
+      window.sleep(90).then(() => {
         Game.animateDrop({
           currentRow: currentRow + 1,
           inputCol,
@@ -271,7 +271,7 @@
         }
         if (!this.board.canPlace(column)) {
           document.getElementById("uiBlocker").classList.remove("block");
-          window.modal("Invalid move!", 2000);
+          window.modal("Invalid move!", 1500);
           return;
         }
         this.round = this.round === 0 ? 1 : 0;
@@ -310,9 +310,10 @@
         } else {
           [aiMove] = this.maximize(this.board, this.getDepth());
         }
-        window.sleep(325 * (14 / Number(this.getDepth()))).then(() => {
+
+        window.sleep(175).then(() => {
           window.modalClose();
-          window.sleep(100).then(() => this.playCoin(aiMove));
+          window.sleep(75).then(() => this.playCoin(aiMove));
         });
       }
     }
