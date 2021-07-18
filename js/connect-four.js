@@ -213,9 +213,11 @@
           document
             .getElementsByTagName("html")[0]
             .classList.add("progressCursor");
+          changeFavicon("yellow");
         }
         if (moveTurn) {
           document.getElementById("uiBlocker").classList.remove("block");
+          changeFavicon("red");
           animationMode = false;
         }
         document.getElementById(
@@ -439,6 +441,16 @@
         ).value
       );
     }
+  };
+
+  const changeFavicon = (color) => {
+    var link =
+      document.querySelector("link[rel*='icon']") ||
+      document.createElement("link");
+    link.type = "image/x-icon";
+    link.rel = "shortcut icon";
+    link.href = "favicon" + color + ".ico";
+    document.getElementsByTagName("head")[0].appendChild(link);
   };
 
   (() => {
