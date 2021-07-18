@@ -450,7 +450,6 @@
     link.type = "image/x-icon";
     link.rel = "shortcut icon";
     link.href = "favicon" + color + ".ico";
-    document.getElementsByTagName("head")[0].appendChild(link);
   };
 
   (() => {
