@@ -1,8 +1,6 @@
-@import url("https://fonts.googleapis.com/css?family=Orbitron&display=swap");
-
 html {
-  font-family: "Orbitron", sans-serif !important;
-  background-color: cornsilk;
+  font-family: "Roboto Mono", monospace;
+  background-color: #b0c4de;
 }
 
 body {
@@ -12,7 +10,6 @@ body {
 
 h1 {
   text-align: center;
-  background-color: cornsilk;
 }
 
 .header-text {
@@ -47,7 +44,7 @@ h1 {
   }
 }
 
-p {
+#lastUpdate {
   font-size: large;
 }
 
@@ -64,11 +61,6 @@ p {
 
 form {
   margin-top: 15px;
-}
-
-button,
-select {
-  font-family: "Orbitron", sans-serif !important;
 }
 
 button {
@@ -124,18 +116,7 @@ h1 {
   width: 100px;
   height: 100px;
   cursor: pointer;
-  background-color: cornsilk;
-}
-
-#gameBoard td:hover::after {
-  background-color: #f4f4f4;
-  content: "";
-  height: 10000px;
-  left: 0;
-  position: absolute;
-  top: -5000px;
-  width: 100%;
-  z-index: -1;
+  background-color: #b0c4de;
 }
 
 .hover {
@@ -150,10 +131,6 @@ h1 {
   width: 51px;
   height: 51px;
   border-radius: 50%;
-}
-
-.finished td:hover::after {
-  background-color: transparent !important;
 }
 
 #gameBoard td {
@@ -201,20 +178,18 @@ h1 {
 }
 
 select {
-  background: #fff;
-  margin: 1px;
-  border: 1px solid #808080;
-  outline: none;
-  width: 125px;
-  height: 30px;
+  margin-top: 0px;
+  font-size: 1em;
+  font-family: "Roboto Mono", monospace;
+  background-color: lightblue;
 }
 
 #githubicon {
   position: absolute;
   top: 40px;
   right: 10vw;
-  width: 70px;
-  height: 70px;
+  width: 60px;
+  height: 60px;
   transition: 1.5s;
   z-index: 0;
   background-color: transparent;
@@ -223,7 +198,7 @@ select {
 
 #githubicon:hover {
   transform: translateY(-5px);
-  background-color: azure;
+  background-color: linen;
 }
 
 #homeIcon {
@@ -243,7 +218,7 @@ select {
 
 #githubicon:hover {
   transform: translateY(-5px);
-  background-color: azure;
+  background-color: linen;
 }
 
 #floatingCircles {
@@ -255,7 +230,7 @@ select {
 
 .circleDiv {
   border-radius: 60px;
-  background-color: cornsilk;
+  background-color: #b0c4de;
   width: 98px !important;
   height: 98px !important;
 }
@@ -288,7 +263,7 @@ select {
   }
 
   50% {
-    background-color: cornsilk;
+    background-color: #b0c4de;
   }
 
   100% {
@@ -328,10 +303,10 @@ select {
   font-size: small;
 }
 
-.shadowBox {
+/* .shadowBox {
   box-shadow: 2px 4px 8px 2px rgba(0, 0, 0, 0.2),
     0 6px 20px 0 rgba(0, 0, 0, 0.19);
-}
+} */
 
 .block {
   display: block !important;
