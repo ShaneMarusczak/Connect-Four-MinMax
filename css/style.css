@@ -71,6 +71,7 @@ button {
   border-radius: 10px;
   background-color: transparent;
   border: 2px solid black;
+  font-family: "Roboto Mono", monospace;
 }
 
 button:hover {

@@ -1,6 +1,7 @@
 "use strict";
 (() => {
-  const scanOrder = [3, 2, 4, 1, 5, 6, 0];
+  const startOrder = [3, 2, 4, 1, 5, 6, 0];
+  let scanOrder = [3, 2, 4, 1, 5, 6, 0];
   let gameOver = false;
   let gameStarted = false;
   let animationMode = false;
@@ -61,44 +62,54 @@
       }
     }
 
-    scoreBoard(row, column, deltaY, deltaX) {
+    scoreBoard(row, column, deltaY, deltaX, populateWinners) {
       let humanPoints = 0;
       let computerPoints = 0;
       let internalRow = row;
       let internalCol = column;
-      this.game.winningArrayHuman = [];
-      this.game.winningArrayCpu = [];
+      if (populateWinners) {
+        this.game.winningArrayHuman = [];
+        this.game.winningArrayCpu = [];
+      }
 
       for (let i = 0; i < 4; i++) {
         if (this.gameBoardArray[internalRow][internalCol] === 0) {
-          this.game.winningArrayHuman.push([internalRow, internalCol]);
+          if (populateWinners) {
+            this.game.winningArrayHuman.push([internalRow, internalCol]);
+          }
           humanPoints++;
         } else if (this.gameBoardArray[internalRow][internalCol] === 1) {
-          this.game.winningArrayCpu.push([internalRow, internalCol]);
+          if (populateWinners) {
+            this.game.winningArrayCpu.push([internalRow, internalCol]);
+          }
           computerPoints++;
         }
         internalRow = internalRow + deltaY;
         internalCol = internalCol + deltaX;
       }
       if (humanPoints === 4) {
-        this.game.winners = this.game.winningArrayHuman;
+        if (populateWinners) {
+          this.game.winners = this.game.winningArrayHuman;
+        }
         return -this.game.score;
       } else if (computerPoints === 4) {
-        this.game.winners = this.game.winningArrayCpu;
+        if (populateWinners) {
+          this.game.winners = this.game.winningArrayCpu;
+        }
         return this.game.score;
       } else {
         return computerPoints;
       }
     }
 
-    evaluateScore() {
+    evaluateScore(populateWinners) {
       let verticalPoints = 0;
       let horizontalPoints = 0;
       let diagonalPoints1 = 0;
       let diagonalPoints2 = 0;
       for (let row = 0; row < this.game.rows - 3; row++) {
         for (let column = 0; column < this.game.columns; column++) {
-          const score = this.scoreBoard(row, column, 1, 0);
+          const score = this.scoreBoard(row, column, 1, 0, populateWinners);
           if (score === this.game.score) return this.game.score;
           if (score === -this.game.score) return -this.game.score;
           verticalPoints = verticalPoints + score;
@@ -106,7 +117,7 @@
       }
       for (let row = 0; row < this.game.rows; row++) {
         for (let column = 0; column < this.game.columns - 3; column++) {
-          const score = this.scoreBoard(row, column, 0, 1);
+          const score = this.scoreBoard(row, column, 0, 1, populateWinners);
           if (score === this.game.score) return this.game.score;
           if (score === -this.game.score) return -this.game.score;
           horizontalPoints = horizontalPoints + score;
@@ -114,7 +125,7 @@
       }
       for (let row = 0; row < this.game.rows - 3; row++) {
         for (let column = 0; column < this.game.columns - 3; column++) {
-          const score = this.scoreBoard(row, column, 1, 1);
+          const score = this.scoreBoard(row, column, 1, 1, populateWinners);
           if (score === this.game.score) return this.game.score;
           if (score === -this.game.score) return -this.game.score;
           diagonalPoints1 = diagonalPoints1 + score;
@@ -122,7 +133,7 @@
       }
       for (let row = 3; row < this.game.rows; row++) {
         for (let column = 0; column <= this.game.columns - 4; column++) {
-          const score = this.scoreBoard(row, column, -1, +1);
+          const score = this.scoreBoard(row, column, -1, +1, populateWinners);
           if (score === this.game.score) return this.game.score;
           if (score === -this.game.score) return -this.game.score;
           diagonalPoints2 = diagonalPoints2 + score;
@@ -286,7 +297,7 @@
         const newBoard = this.board.getBoardCopy();
         if (!newBoard.columnIsFull(column)) {
           newBoard.placeInColumnForQuickMove(column, 1);
-          if (newBoard.evaluateScore() === 100000) {
+          if (newBoard.evaluateScore(false) === 100000) {
             return column;
           }
         }
@@ -295,12 +306,74 @@
         const newBoard = this.board.getBoardCopy();
         if (!newBoard.columnIsFull(column)) {
           newBoard.placeInColumnForQuickMove(column, 0);
-          if (newBoard.evaluateScore() === -100000) {
+          if (newBoard.evaluateScore(false) === -100000) {
             return column;
           }
         }
       }
       return -1;
+    }
+
+    generateCompMoveInner() {
+      let newBestMove;
+      for (let depth = 1; depth <= this.getDepth(); depth++) {
+        let [bestMoveAtDepth] = this.maximize(this.board, depth);
+        let newScanOrder = [];
+        newBestMove = bestMoveAtDepth;
+        newScanOrder.push(bestMoveAtDepth);
+        if (bestMoveAtDepth === 0) {
+          newScanOrder.push(1);
+          newScanOrder.push(2);
+          newScanOrder.push(3);
+          newScanOrder.push(4);
+          newScanOrder.push(5);
+          newScanOrder.push(6);
+        } else if (bestMoveAtDepth === 1) {
+          newScanOrder.push(0);
+          newScanOrder.push(2);
+          newScanOrder.push(3);
+          newScanOrder.push(4);
+          newScanOrder.push(5);
+          newScanOrder.push(6);
+        } else if (bestMoveAtDepth === 2) {
+          newScanOrder.push(1);
+          newScanOrder.push(3);
+          newScanOrder.push(0);
+          newScanOrder.push(4);
+          newScanOrder.push(5);
+          newScanOrder.push(6);
+        } else if (bestMoveAtDepth === 3) {
+          newScanOrder.push(2);
+          newScanOrder.push(4);
+          newScanOrder.push(1);
+          newScanOrder.push(5);
+          newScanOrder.push(0);
+          newScanOrder.push(6);
+        } else if (bestMoveAtDepth === 4) {
+          newScanOrder.push(3);
+          newScanOrder.push(5);
+          newScanOrder.push(2);
+          newScanOrder.push(6);
+          newScanOrder.push(1);
+          newScanOrder.push(0);
+        } else if (bestMoveAtDepth === 5) {
+          newScanOrder.push(6);
+          newScanOrder.push(4);
+          newScanOrder.push(3);
+          newScanOrder.push(2);
+          newScanOrder.push(1);
+          newScanOrder.push(0);
+        } else if (bestMoveAtDepth === 6) {
+          newScanOrder.push(5);
+          newScanOrder.push(4);
+          newScanOrder.push(3);
+          newScanOrder.push(2);
+          newScanOrder.push(1);
+          newScanOrder.push(0);
+        }
+        scanOrder = newScanOrder;
+      }
+      return newBestMove;
     }
 
     generateComputerDecision() {
@@ -310,7 +383,7 @@
         if (quickMove !== -1) {
           aiMove = quickMove;
         } else {
-          [aiMove] = this.maximize(this.board, this.getDepth());
+          aiMove = this.generateCompMoveInner();
         }
 
         window.sleep(175).then(() => {
@@ -331,7 +404,7 @@
     }
 
     maximize(board, depth, alpha, beta) {
-      const score = board.evaluateScore();
+      const score = board.evaluateScore(false);
       if (board.isFinished(depth, score)) return [null, score];
       const max = [null, -99999];
       for (let column of scanOrder) {
@@ -350,7 +423,7 @@
     }
 
     minimize(board, depth, alpha, beta) {
-      const score = board.evaluateScore();
+      const score = board.evaluateScore(false);
       if (board.isFinished(depth, score)) return [null, score];
       const min = [null, 99999];
       for (let column of scanOrder) {
@@ -369,7 +442,7 @@
     }
 
     checkGameOver() {
-      const thisScore = this.board.evaluateScore();
+      const thisScore = this.board.evaluateScore(true);
       if (thisScore === -this.score) {
         this.gameOverHelper("You Win!");
       } else if (thisScore === this.score) {
