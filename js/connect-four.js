@@ -209,7 +209,7 @@
         document
           .getElementById("fc" + element.cellIndex)
           .classList.remove("bounce");
-        window.sleep(700).then(() => {
+        window.sleep(600).then(() => {
           if (this.round === 1) this.generateComputerDecision();
         });
       }
@@ -218,7 +218,7 @@
     static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
       if (currentRow === inputRow) {
         if (!gameOver && !moveTurn) {
-          window.sleep(50).then(() => {
+          window.sleep(10).then(() => {
             window.modalOpen("Thinking...");
           });
           document
@@ -243,7 +243,7 @@
       document
         .getElementById("td" + currentRow + inputCol)
         .classList.add(moveTurn ? "cpu-coin" : "human-coin");
-      window.sleep(90).then(() => {
+      window.sleep(85).then(() => {
         document
           .getElementById("td" + currentRow + inputCol)
           .classList.remove("coin");
@@ -251,7 +251,7 @@
           .getElementById("td" + currentRow + inputCol)
           .classList.remove(moveTurn ? "cpu-coin" : "human-coin");
       });
-      window.sleep(90).then(() => {
+      window.sleep(85).then(() => {
         Game.animateDrop({
           currentRow: currentRow + 1,
           inputCol,
@@ -316,62 +316,24 @@
 
     generateCompMoveInner() {
       let newBestMove;
-      for (let depth = 1; depth <= this.getDepth(); depth++) {
+      for (let depth = 2; depth <= this.depth; depth++) {
         let [bestMoveAtDepth] = this.maximize(this.board, depth);
-        let newScanOrder = [];
         newBestMove = bestMoveAtDepth;
-        newScanOrder.push(bestMoveAtDepth);
         if (bestMoveAtDepth === 0) {
-          newScanOrder.push(1);
-          newScanOrder.push(2);
-          newScanOrder.push(3);
-          newScanOrder.push(4);
-          newScanOrder.push(5);
-          newScanOrder.push(6);
+          scanOrder = [0, 1, 2, 3, 4, 5, 6];
         } else if (bestMoveAtDepth === 1) {
-          newScanOrder.push(0);
-          newScanOrder.push(2);
-          newScanOrder.push(3);
-          newScanOrder.push(4);
-          newScanOrder.push(5);
-          newScanOrder.push(6);
+          scanOrder = [1, 0, 2, 3, 4, 5, 6];
         } else if (bestMoveAtDepth === 2) {
-          newScanOrder.push(1);
-          newScanOrder.push(3);
-          newScanOrder.push(0);
-          newScanOrder.push(4);
-          newScanOrder.push(5);
-          newScanOrder.push(6);
+          scanOrder = [2, 1, 3, 0, 4, 5, 6];
         } else if (bestMoveAtDepth === 3) {
-          newScanOrder.push(2);
-          newScanOrder.push(4);
-          newScanOrder.push(1);
-          newScanOrder.push(5);
-          newScanOrder.push(0);
-          newScanOrder.push(6);
+          scanOrder = [3, 2, 4, 1, 5, 0, 6];
         } else if (bestMoveAtDepth === 4) {
-          newScanOrder.push(3);
-          newScanOrder.push(5);
-          newScanOrder.push(2);
-          newScanOrder.push(6);
-          newScanOrder.push(1);
-          newScanOrder.push(0);
+          scanOrder = [4, 3, 5, 2, 6, 1, 0];
         } else if (bestMoveAtDepth === 5) {
-          newScanOrder.push(6);
-          newScanOrder.push(4);
-          newScanOrder.push(3);
-          newScanOrder.push(2);
-          newScanOrder.push(1);
-          newScanOrder.push(0);
+          scanOrder = [5, 6, 4, 3, 2, 1, 0];
         } else if (bestMoveAtDepth === 6) {
-          newScanOrder.push(5);
-          newScanOrder.push(4);
-          newScanOrder.push(3);
-          newScanOrder.push(2);
-          newScanOrder.push(1);
-          newScanOrder.push(0);
+          scanOrder = [6, 5, 4, 3, 2, 1, 0];
         }
-        scanOrder = newScanOrder;
       }
       return newBestMove;
     }
@@ -380,15 +342,17 @@
       if (!gameOver) {
         let aiMove = 0;
         const quickMove = this.quickMove();
-        if (quickMove !== -1) {
+        if (this.turnsTaken === 1) {
+          aiMove = 3;
+        } else if (quickMove !== -1) {
           aiMove = quickMove;
         } else {
           aiMove = this.generateCompMoveInner();
         }
 
-        window.sleep(175).then(() => {
+        window.sleep(150).then(() => {
           window.modalClose();
-          window.sleep(75).then(() => this.playCoin(aiMove));
+          window.sleep(50).then(() => this.playCoin(aiMove));
         });
       }
     }
