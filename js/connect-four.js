@@ -1,6 +1,5 @@
 "use strict";
 (() => {
-  const startOrder = [3, 2, 4, 1, 5, 6, 0];
   let scanOrder = [3, 2, 4, 1, 5, 6, 0];
   let gameOver = false;
   let gameStarted = false;
@@ -13,15 +12,11 @@
     }
 
     isFinished(depth, score) {
-      if (
-        depth === 0 ||
-        score === this.game.score ||
-        score === -this.game.score ||
-        this.isFull()
-      ) {
-        return true;
-      }
-      return false;
+      return depth === 0 ||
+          score === this.game.score ||
+          score === -this.game.score ||
+          this.isFull();
+
     }
 
     columnIsFull(col) {
@@ -171,6 +166,7 @@
       this.round = 0;
       this.winners = [];
       this.turnsTaken = 0;
+      this.board = undefined;
 
       this.init();
     }
@@ -195,8 +191,8 @@
           },
           false
         );
-        td.addEventListener("mouseover", hoverOverCollumnHighLight);
-        td.addEventListener("mouseleave", hoverOverCollumnHighLightReset);
+        td.addEventListener("mouseover", hoverOverColumnHighLight);
+        td.addEventListener("mouseleave", hoverOverColumnHighLightReset);
       });
     }
 
@@ -204,12 +200,12 @@
       if (!gameOver) {
         this.turnsTaken++;
         document.getElementById("uiBlocker").classList.add("block");
-        const element = e.target || window.event.srcElement;
+        const element = e.target;
         if (this.round === 0) this.playCoin(element.cellIndex);
         document
           .getElementById("fc" + element.cellIndex)
           .classList.remove("bounce");
-        window.sleep(600).then(() => {
+        sleep(600).then(() => {
           if (this.round === 1) this.generateComputerDecision();
         });
       }
@@ -218,8 +214,8 @@
     static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
       if (currentRow === inputRow) {
         if (!gameOver && !moveTurn) {
-          window.sleep(10).then(() => {
-            window.modalOpen("Thinking...");
+          sleep(10).then(() => {
+            modalOpen("Thinking...");
           });
           document
             .getElementsByTagName("html")[0]
@@ -243,7 +239,7 @@
       document
         .getElementById("td" + currentRow + inputCol)
         .classList.add(moveTurn ? "cpu-coin" : "human-coin");
-      window.sleep(85).then(() => {
+      sleep(85).then(() => {
         document
           .getElementById("td" + currentRow + inputCol)
           .classList.remove("coin");
@@ -251,7 +247,7 @@
           .getElementById("td" + currentRow + inputCol)
           .classList.remove(moveTurn ? "cpu-coin" : "human-coin");
       });
-      window.sleep(85).then(() => {
+      sleep(85).then(() => {
         Game.animateDrop({
           currentRow: currentRow + 1,
           inputCol,
@@ -284,7 +280,7 @@
         }
         if (!this.board.canPlace(column)) {
           document.getElementById("uiBlocker").classList.remove("block");
-          window.modal("Invalid move!", 1500);
+          modal("Invalid move!", 1500);
           return;
         }
         this.round = this.round === 0 ? 1 : 0;
@@ -317,7 +313,7 @@
     generateCompMoveInner() {
       let newBestMove;
       for (let depth = 2; depth <= this.depth; depth++) {
-        let [bestMoveAtDepth] = this.maximize(this.board, depth);
+        let [bestMoveAtDepth] = this.maximize(this.board, depth, -100000, 100000);
         newBestMove = bestMoveAtDepth;
         if (bestMoveAtDepth === 0) {
           scanOrder = [0, 1, 2, 3, 4, 5, 6];
@@ -350,32 +346,22 @@
           aiMove = this.generateCompMoveInner();
         }
 
-        window.sleep(150).then(() => {
-          window.modalClose();
-          window.sleep(50).then(() => this.playCoin(aiMove));
+        sleep(150).then(() => {
+          modalClose();
+          sleep(50).then(() => this.playCoin(aiMove));
         });
-      }
-    }
-
-    getDepth() {
-      if (Number(this.depth) <= 4) {
-        return this.depth;
-      } else if (this.turnsTaken < 5) {
-        return this.depth - 2;
-      } else {
-        return this.depth;
       }
     }
 
     maximize(board, depth, alpha, beta) {
       const score = board.evaluateScore(false);
-      if (board.isFinished(depth, score)) return [null, score];
-      const max = [null, -99999];
+      if (board.isFinished(depth, score)) return [-1, score];
+      const max = [-1, -99999];
       for (let column of scanOrder) {
         const newBoard = board.getBoardCopy();
         if (newBoard.canPlace(column)) {
           const nextMove = this.minimize(newBoard, depth - 1, alpha, beta);
-          if (max[0] === null || nextMove[1] > max[1]) {
+          if (max[0] === -1 || nextMove[1] > max[1]) {
             max[0] = column;
             [, max[1]] = nextMove;
             [, alpha] = nextMove;
@@ -388,13 +374,13 @@
 
     minimize(board, depth, alpha, beta) {
       const score = board.evaluateScore(false);
-      if (board.isFinished(depth, score)) return [null, score];
-      const min = [null, 99999];
+      if (board.isFinished(depth, score)) return [-1, score];
+      const min = [-1, 99999];
       for (let column of scanOrder) {
         const newBoard = board.getBoardCopy();
         if (newBoard.canPlace(column)) {
           const nextMove = this.maximize(newBoard, depth - 1, alpha, beta);
-          if (min[0] === null || nextMove[1] < min[1]) {
+          if (min[0] === -1 || nextMove[1] < min[1]) {
             min[0] = column;
             [, min[1]] = nextMove;
             [, beta] = nextMove;
@@ -413,7 +399,7 @@
         this.gameOverHelper("You Lose!");
       } else if (this.board.isFull()) {
         gameOver = true;
-        window.modal("Draw!", 2000);
+        modal("Draw!", 2000);
       }
       document
         .getElementsByTagName("html")[0]
@@ -423,8 +409,8 @@
     gameOverHelper(message) {
       document.getElementById("uiBlocker").classList.remove("block");
       gameOver = true;
-      window.modal(message, 2000);
-      window.sleep(1000).then(() => {
+      modal(message, 2000);
+      sleep(1000).then(() => {
         this.winnersColorChange();
       });
     }
@@ -442,7 +428,7 @@
     }
   }
 
-  function hoverOverCollumnHighLight(e) {
+  function hoverOverColumnHighLight(e) {
     if (!gameOver && !animationMode) {
       const col = Number(e.target.id.substring(3));
       document.getElementById("fc" + col).classList.add("bounce");
@@ -457,7 +443,7 @@
     }
   }
 
-  function hoverOverCollumnHighLightReset(e) {
+  function hoverOverColumnHighLightReset(e) {
     const col = Number(e.target.id.substring(3));
     document.getElementById("fc" + col).classList.remove("bounce");
     for (let y = 5; y >= 0; y--) {
@@ -481,13 +467,54 @@
   };
 
   const changeFavicon = (color) => {
-    var link =
-      document.querySelector("link[rel*='icon']") ||
-      document.createElement("link");
+    const link =
+        document.querySelector("link[rel*='icon']") ||
+        document.createElement("link");
     link.type = "image/x-icon";
     link.rel = "shortcut icon";
     link.href = "favicon" + color + ".ico";
   };
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function modalOpen(message) {
+    const modalBox = document.createElement("div");
+    modalBox.id = "modal-box";
+    const innerModalBox = document.createElement("div");
+    innerModalBox.id = "inner-modal-box";
+    const modalMessage = document.createElement("span");
+    modalMessage.id = "modal-message";
+    innerModalBox.appendChild(modalMessage);
+    modalBox.appendChild(innerModalBox);
+    modalMessage.innerText = message;
+    const outerAnimationContainer = document.createElement("div");
+    outerAnimationContainer.classList.add("animation");
+    for (let i = 0; i < 3; i++) {
+      outerAnimationContainer.appendChild(document.createElement("div"));
+    }
+    innerModalBox.appendChild(outerAnimationContainer);
+    document.getElementsByTagName("html")[0].appendChild(modalBox);
+  }
+
+  function modalClose() {
+    document.getElementById("modal-box").remove();
+  }
+
+  function modal(message, duration) {
+    const modalBox = document.createElement("div");
+    modalBox.id = "modal-box";
+    const innerModalBox = document.createElement("div");
+    innerModalBox.id = "inner-modal-box";
+    const modalMessage = document.createElement("span");
+    modalMessage.id = "modal-message";
+    innerModalBox.appendChild(modalMessage);
+    modalBox.appendChild(innerModalBox);
+    modalMessage.innerText = message;
+    document.getElementsByTagName("html")[0].appendChild(modalBox);
+    sleep(duration).then(() => modalBox.remove());
+  }
 
   (() => {
     document.getElementById("start").addEventListener("click", start);

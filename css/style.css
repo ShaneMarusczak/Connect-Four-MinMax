@@ -104,12 +104,6 @@ h1 {
   background-color: blue;
 }
 
-#coinfeld {
-  position: relative;
-  width: 100%;
-  height: 55px;
-}
-
 #gameBoard td {
   padding: 2px;
   border: 4px solid blue;
@@ -127,8 +121,8 @@ h1 {
 #coin {
   position: absolute;
   display: none;
-  left: 0px;
-  top: 0px;
+  left: 0;
+  top: 0;
   width: 51px;
   height: 51px;
   border-radius: 50%;
@@ -165,7 +159,6 @@ h1 {
   -webkit-animation: animationFrames 1s infinite;
   -moz-animation: animationFrames 1s infinite;
   -o-animation: animationFrames 1s infinite;
-  -ms-animation: animationFrames 1s infinite;
 }
 
 @keyframes animationFrames {
@@ -179,7 +172,7 @@ h1 {
 }
 
 select {
-  margin-top: 0px;
+  margin-top: 0;
   font-size: 1em;
   font-family: "Roboto Mono", monospace;
   background-color: lightblue;
@@ -316,3 +309,119 @@ select {
 .progressCursor {
   cursor: progress;
 }
+
+#modal-box {
+  z-index: 1;
+  position: fixed;
+  padding: 0;
+  margin: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+#inner-modal-box {
+  position: relative;
+  text-align: center;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 4px black;
+  margin-left: 40vw;
+  margin-top: 10vh;
+  background-color: azure;
+  width: 350px;
+  height: 15vh;
+}
+
+#modal-message {
+  vertical-align: middle;
+  font-family: "Roboto Mono", monospace !important;
+  font-size: xx-large;
+  line-height: 15vh;
+}
+
+#close-button {
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  font-size: 30px;
+  font-weight: bold;
+  border-radius: 30px;
+  width: 25px;
+  height: 25px;
+  line-height: 25px;
+  box-shadow: inset 0 0 0 1px black;
+}
+
+#close-button:hover {
+  cursor: pointer;
+  color: red;
+}
+
+.animation {
+  position: relative;
+  margin-left: 135px;
+  border: none !important;
+}
+
+.animation div {
+  position: absolute;
+  top: -35px;
+  width: 13px !important;
+  height: 13px !important;
+  border-radius: 50%;
+  background: black !important;
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+
+.animation div:nth-child(1) {
+  left: 8px;
+  animation: animation1 0.6s infinite;
+}
+
+.animation div:nth-child(2) {
+  left: 8px;
+  animation: animation2 0.6s infinite;
+}
+
+.animation div:nth-child(3) {
+  left: 32px;
+  animation: animation2 0.6s infinite;
+}
+
+.animation div:nth-child(4) {
+  left: 56px;
+  animation: animation3 0.6s infinite;
+}
+
+@keyframes animation1 {
+  0% {
+    transform: scale(0);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes animation3 {
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(0);
+  }
+}
+
+@keyframes animation2 {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  100% {
+    transform: translate(24px, 0);
+  }
+}
+
