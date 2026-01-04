@@ -29,7 +29,26 @@
   const TT_SIZE = 1048583; // ~1M entries, prime number
 
   // Center-first column ordering for better pruning
-  const DEFAULT_SCAN_ORDER = [3, 2, 4, 1, 5, 6, 0];
+  const DEFAULT_SCAN_ORDER = [3, 2, 4, 1, 5, 0, 6];
+
+  // Column weights for position evaluation (center columns are more valuable)
+  const COLUMN_WEIGHTS = [1, 2, 3, 4, 3, 2, 1];
+
+  // ============================================================================
+  // GAME STATE (encapsulated)
+  // ============================================================================
+  const GameState = {
+    scanOrder: [...DEFAULT_SCAN_ORDER],
+    gameOver: false,
+    gameStarted: false,
+    animationMode: false,
+
+    reset() {
+      this.scanOrder = [...DEFAULT_SCAN_ORDER];
+      this.gameOver = false;
+      this.animationMode = false;
+    }
+  };
 
   // ============================================================================
   // TRANSPOSITION TABLE
@@ -58,6 +77,22 @@
       return key;
     }
 
+    // Compute mirror hash for symmetry exploitation
+    hashMirror(board) {
+      let key = 0n;
+      for (let row = 0; row < BOARD_ROWS; row++) {
+        for (let col = 0; col < BOARD_COLS; col++) {
+          const mirrorCol = BOARD_COLS - 1 - col;
+          const cell = board[row][mirrorCol];
+          if (cell !== null) {
+            const pos = BigInt(row * BOARD_COLS + col);
+            key |= BigInt(cell + 1) << (pos * 2n);
+          }
+        }
+      }
+      return key;
+    }
+
     store(board, depth, score, flag, bestMove) {
       const key = this.hash(board);
       const existing = this.table.get(key);
@@ -75,20 +110,36 @@
     }
 
     lookup(board, depth, alpha, beta) {
-      const key = this.hash(board);
-      const entry = this.table.get(key);
+      // Try normal position first
+      let key = this.hash(board);
+      let entry = this.table.get(key);
+      let isMirrored = false;
+
+      // If not found, try mirrored position (symmetry exploitation)
+      if (!entry) {
+        key = this.hashMirror(board);
+        entry = this.table.get(key);
+        isMirrored = true;
+      }
 
       if (entry && entry.depth >= depth) {
         this.hits++;
+        let bestMove = entry.bestMove;
+
+        // Mirror the best move if we found a mirrored entry
+        if (isMirrored && bestMove !== null && bestMove >= 0) {
+          bestMove = BOARD_COLS - 1 - bestMove;
+        }
+
         if (entry.flag === 'exact') {
-          return { score: entry.score, bestMove: entry.bestMove, valid: true };
+          return { score: entry.score, bestMove, valid: true };
         } else if (entry.flag === 'lower' && entry.score >= beta) {
-          return { score: entry.score, bestMove: entry.bestMove, valid: true };
+          return { score: entry.score, bestMove, valid: true };
         } else if (entry.flag === 'upper' && entry.score <= alpha) {
-          return { score: entry.score, bestMove: entry.bestMove, valid: true };
+          return { score: entry.score, bestMove, valid: true };
         }
         // Return best move hint even if score isn't usable
-        return { score: null, bestMove: entry.bestMove, valid: false };
+        return { score: null, bestMove, valid: false };
       }
       return { score: null, bestMove: null, valid: false };
     }
@@ -164,6 +215,18 @@
       return false;
     }
 
+    // Count potential winning positions
+    countWinningPositions(pos) {
+      let count = 0;
+      const winPos = this.computeWinningPosition(pos, this.mask);
+      let temp = winPos;
+      while (temp !== 0n) {
+        temp &= temp - 1n;
+        count++;
+      }
+      return count;
+    }
+
     // Get all non-losing moves as a bitmask
     possibleNonLosingMoves() {
       let possible = this.possible();
@@ -226,6 +289,33 @@
       return this.position + this.mask;
     }
 
+    // Mirror key for symmetry
+    mirrorKey() {
+      let mirrorPos = 0n;
+      let mirrorMask = 0n;
+
+      for (let col = 0; col < BOARD_COLS; col++) {
+        const mirrorCol = BOARD_COLS - 1 - col;
+        const colBits = this.columnMask(col);
+        const mirrorColBits = this.columnMask(mirrorCol);
+
+        const posColVal = (this.position & colBits) >> BigInt(col * 7);
+        const maskColVal = (this.mask & colBits) >> BigInt(col * 7);
+
+        mirrorPos |= posColVal << BigInt(mirrorCol * 7);
+        mirrorMask |= maskColVal << BigInt(mirrorCol * 7);
+      }
+
+      return mirrorPos + mirrorMask;
+    }
+
+    // Get canonical key (smaller of normal and mirror)
+    canonicalKey() {
+      const normal = this.key();
+      const mirror = this.mirrorKey();
+      return normal < mirror ? normal : mirror;
+    }
+
     topMask(col) {
       return 1n << BigInt(5 + col * 7);
     }
@@ -246,7 +336,7 @@
       if (possible === 0n) return moves;
 
       // Column order: center first
-      const order = [3, 2, 4, 1, 5, 0, 6];
+      const order = DEFAULT_SCAN_ORDER;
 
       for (const col of order) {
         const move = possible & this.columnMask(col);
@@ -260,28 +350,6 @@
 
       return moves;
     }
-
-    // Load position from array board
-    loadFromArray(boardArray, currentPlayer) {
-      this.reset();
-
-      // Build the position column by column, bottom to top
-      for (let col = 0; col < BOARD_COLS; col++) {
-        for (let row = BOARD_ROWS - 1; row >= 0; row--) {
-          const cell = boardArray[row][col];
-          if (cell !== null) {
-            // Play moves alternating, starting from the move count
-            const isCurrentPlayer = (cell === PLAYER_CPU) === (this.moves % 2 === 0);
-            this.play(col);
-          }
-        }
-      }
-
-      // Adjust position based on who's to move
-      if (currentPlayer === PLAYER_HUMAN) {
-        this.position ^= this.mask;
-      }
-    }
   }
 
   // ============================================================================
@@ -293,8 +361,9 @@
       this.transTable = new Map();
       this.nodeCount = 0;
 
-      // Opening book for perfect play (first few moves)
-      // Key: position key, Value: best column
+      // Opening book for perfect play
+      // Maps position key -> best column
+      // These are known good responses from Connect Four theory
       this.openingBook = new Map([
         // Empty board: play center
         [0n, 3],
@@ -313,8 +382,9 @@
       // Convert array board to bitboard
       this.loadPosition(boardArray, currentPlayer);
 
-      // Check opening book
-      const bookMove = this.openingBook.get(this.engine.key());
+      // Check opening book (use canonical key for symmetry)
+      const canonicalKey = this.engine.canonicalKey();
+      const bookMove = this.openingBook.get(canonicalKey);
       if (bookMove !== undefined && this.engine.canPlay(bookMove)) {
         return bookMove;
       }
@@ -330,11 +400,11 @@
       let bestMove = 3; // Default to center
       let bestScore = -WIN_SCORE;
 
-      // Iterative deepening
+      // Calculate max possible depth
       const maxDepth = 42 - this.engine.moves;
 
-      for (let depth = 2; depth <= Math.min(maxDepth, 20); depth++) {
-        this.transTable.clear();
+      // Iterative deepening - DON'T clear table between depths
+      for (let depth = 2; depth <= Math.min(maxDepth, 22); depth++) {
         const result = this.negamaxRoot(depth);
 
         if (result.move !== -1) {
@@ -342,8 +412,8 @@
           bestScore = result.score;
         }
 
-        // If we found a winning move, stop searching
-        if (bestScore >= WIN_SCORE - 50) break;
+        // If we found a definite win, stop searching
+        if (bestScore > (40 - this.engine.moves) / 2) break;
       }
 
       return bestMove;
@@ -352,42 +422,10 @@
     loadPosition(boardArray, currentPlayer) {
       this.engine.reset();
 
-      // We need to replay the game to build correct bitboard state
-      const moves = [];
-
-      // Collect all moves in order (approximation based on column heights)
-      const heights = new Array(BOARD_COLS).fill(0);
-      for (let row = BOARD_ROWS - 1; row >= 0; row--) {
-        for (let col = 0; col < BOARD_COLS; col++) {
-          if (boardArray[row][col] !== null) {
-            heights[col]++;
-          }
-        }
-      }
-
-      // Reconstruct move sequence (simplified - may not be exact order but same final position)
-      for (let row = BOARD_ROWS - 1; row >= 0; row--) {
-        for (let col = 0; col < BOARD_COLS; col++) {
-          if (boardArray[row][col] !== null) {
-            this.engine.play(col);
-          }
-        }
-      }
-
-      // Fix: rebuild properly
-      this.engine.reset();
-      let moveCount = 0;
-      for (let row = BOARD_ROWS - 1; row >= 0; row--) {
-        for (let col = 0; col < BOARD_COLS; col++) {
-          if (boardArray[row][col] !== null) {
-            moveCount++;
-          }
-        }
-      }
-
-      // Simple approach: rebuild bitboards directly
+      // Build bitboards directly from array
       let cpuPos = 0n;
       let humanPos = 0n;
+      let moveCount = 0;
 
       for (let col = 0; col < BOARD_COLS; col++) {
         let bitPos = BigInt(col * 7);
@@ -396,9 +434,11 @@
           if (cell === PLAYER_CPU) {
             cpuPos |= (1n << bitPos);
             bitPos++;
+            moveCount++;
           } else if (cell === PLAYER_HUMAN) {
             humanPos |= (1n << bitPos);
             bitPos++;
+            moveCount++;
           }
         }
       }
@@ -476,9 +516,11 @@
         }
       }
 
-      // Depth limit
-      if (depth <= 0) {
-        return this.evaluate();
+      // Upper bound based on remaining moves
+      let max = (41 - this.engine.moves) / 2;
+      if (beta > max) {
+        beta = max;
+        if (alpha >= beta) return beta;
       }
 
       // Get non-losing moves
@@ -488,8 +530,8 @@
         return -(43 - this.engine.moves) / 2; // We will lose
       }
 
-      // Transposition table lookup
-      const key = this.engine.key();
+      // Transposition table lookup (use canonical key for symmetry)
+      const key = this.engine.canonicalKey();
       const ttEntry = this.transTable.get(key);
       if (ttEntry && ttEntry.depth >= depth) {
         if (ttEntry.flag === 'exact') return ttEntry.score;
@@ -498,11 +540,9 @@
         if (alpha >= beta) return ttEntry.score;
       }
 
-      // Upper bound based on remaining moves
-      const max = (41 - this.engine.moves) / 2;
-      if (beta > max) {
-        beta = max;
-        if (alpha >= beta) return beta;
+      // Depth limit - use evaluation function
+      if (depth <= 0) {
+        return this.evaluate();
       }
 
       let bestScore = -WIN_SCORE;
@@ -547,21 +587,43 @@
     }
 
     evaluate() {
-      // Simple evaluation based on potential winning positions
-      // This is used when depth limit is reached
-      return 0; // Neutral evaluation when we can't search deeper
+      // Heuristic evaluation when depth limit is reached
+      // Count potential winning positions for both players
+
+      const myWinPos = this.engine.countWinningPositions(this.engine.position);
+      const oppPos = this.engine.position ^ this.engine.mask;
+      const oppWinPos = this.engine.countWinningPositions(oppPos);
+
+      // Normalize to a small score range
+      const score = (myWinPos - oppWinPos) * 0.1;
+
+      // Add positional bonus for center control
+      let centerBonus = 0;
+      const centerMask = this.engine.columnMask(3);
+      const myCenter = this.engine.position & centerMask;
+      const oppCenter = oppPos & centerMask;
+
+      // Count bits in center column
+      let temp = myCenter;
+      while (temp !== 0n) {
+        temp &= temp - 1n;
+        centerBonus += 0.05;
+      }
+      temp = oppCenter;
+      while (temp !== 0n) {
+        temp &= temp - 1n;
+        centerBonus -= 0.05;
+      }
+
+      return score + centerBonus;
     }
   }
 
   // ============================================================================
-  // GAME STATE
+  // SHARED INSTANCES
   // ============================================================================
-  let scanOrder = [...DEFAULT_SCAN_ORDER];
-  let gameOver = false;
-  let gameStarted = false;
-  let animationMode = false;
-  let transpositionTable = new TranspositionTable();
-  let extremeSolver = new ExtremeSolver();
+  const transpositionTable = new TranspositionTable();
+  const extremeSolver = new ExtremeSolver();
 
   // ============================================================================
   // BOARD CLASS
@@ -647,12 +709,12 @@
         if (populateWinners) {
           this.game.winners = this.game.winningArrayHuman;
         }
-        return -WIN_SCORE;
+        return -this.game.score;
       } else if (computerPoints === 4) {
         if (populateWinners) {
           this.game.winners = this.game.winningArrayCpu;
         }
-        return WIN_SCORE;
+        return this.game.score;
       } else {
         return computerPoints;
       }
@@ -666,32 +728,32 @@
       for (let row = 0; row < BOARD_ROWS - 3; row++) {
         for (let column = 0; column < BOARD_COLS; column++) {
           const score = this.scoreBoard(row, column, 1, 0, populateWinners);
-          if (score === WIN_SCORE) return WIN_SCORE;
-          if (score === -WIN_SCORE) return -WIN_SCORE;
+          if (score === this.game.score) return this.game.score;
+          if (score === -this.game.score) return -this.game.score;
           verticalPoints = verticalPoints + score;
         }
       }
       for (let row = 0; row < BOARD_ROWS; row++) {
         for (let column = 0; column < BOARD_COLS - 3; column++) {
           const score = this.scoreBoard(row, column, 0, 1, populateWinners);
-          if (score === WIN_SCORE) return WIN_SCORE;
-          if (score === -WIN_SCORE) return -WIN_SCORE;
+          if (score === this.game.score) return this.game.score;
+          if (score === -this.game.score) return -this.game.score;
           horizontalPoints = horizontalPoints + score;
         }
       }
       for (let row = 0; row < BOARD_ROWS - 3; row++) {
         for (let column = 0; column < BOARD_COLS - 3; column++) {
           const score = this.scoreBoard(row, column, 1, 1, populateWinners);
-          if (score === WIN_SCORE) return WIN_SCORE;
-          if (score === -WIN_SCORE) return -WIN_SCORE;
+          if (score === this.game.score) return this.game.score;
+          if (score === -this.game.score) return -this.game.score;
           diagonalPoints1 = diagonalPoints1 + score;
         }
       }
       for (let row = 3; row < BOARD_ROWS; row++) {
         for (let column = 0; column <= BOARD_COLS - 4; column++) {
           const score = this.scoreBoard(row, column, -1, +1, populateWinners);
-          if (score === WIN_SCORE) return WIN_SCORE;
-          if (score === -WIN_SCORE) return -WIN_SCORE;
+          if (score === this.game.score) return this.game.score;
+          if (score === -this.game.score) return -this.game.score;
           diagonalPoints2 = diagonalPoints2 + score;
         }
       }
@@ -725,6 +787,7 @@
     constructor(depth) {
       this.rows = BOARD_ROWS;
       this.columns = BOARD_COLS;
+      this.score = WIN_SCORE; // Restore this property for Board class
       this.depth = parseInt(depth, 10);
       this.isExtremeMode = this.depth === 99;
       this.round = 0;
@@ -734,6 +797,7 @@
 
       // Clear transposition table for new game
       transpositionTable.clear();
+      extremeSolver.transTable.clear();
 
       this.init();
     }
@@ -764,7 +828,7 @@
     }
 
     move(e) {
-      if (!gameOver) {
+      if (!GameState.gameOver) {
         this.turnsTaken++;
         document.getElementById("uiBlocker").classList.add("block");
         const element = e.target;
@@ -780,7 +844,7 @@
 
     static animateDrop({ inputRow, inputCol, moveTurn, currentRow = 0 } = {}) {
       if (currentRow === inputRow) {
-        if (!gameOver && !moveTurn) {
+        if (!GameState.gameOver && !moveTurn) {
           sleep(ANIM_MODAL_DELAY).then(() => {
             modalOpen("Thinking...");
           });
@@ -792,14 +856,14 @@
         if (moveTurn) {
           document.getElementById("uiBlocker").classList.remove("block");
           changeFavicon("red");
-          animationMode = false;
+          GameState.animationMode = false;
         }
         document.getElementById(
           "td" + currentRow + inputCol
         ).className = moveTurn ? "coin cpu-coin" : "coin human-coin";
         return;
       }
-      animationMode = true;
+      GameState.animationMode = true;
       document
         .getElementById("td" + currentRow + inputCol)
         .classList.add("coin");
@@ -825,7 +889,7 @@
     }
 
     playCoin(column) {
-      if (!gameOver) {
+      if (!GameState.gameOver) {
         for (let y = this.rows - 1; y >= 0; y--) {
           const td = document.getElementById("gameBoard").rows[y].cells[column];
           if (td.classList.contains("empty")) {
@@ -860,7 +924,7 @@
         const newBoard = this.board.getBoardCopy();
         if (!newBoard.columnIsFull(column)) {
           newBoard.placeInColumnForQuickMove(column, PLAYER_CPU);
-          if (newBoard.evaluateScore(false) === WIN_SCORE) {
+          if (newBoard.evaluateScore(false) === this.score) {
             return column;
           }
         }
@@ -869,7 +933,7 @@
         const newBoard = this.board.getBoardCopy();
         if (!newBoard.columnIsFull(column)) {
           newBoard.placeInColumnForQuickMove(column, PLAYER_HUMAN);
-          if (newBoard.evaluateScore(false) === -WIN_SCORE) {
+          if (newBoard.evaluateScore(false) === -this.score) {
             return column;
           }
         }
@@ -879,7 +943,7 @@
 
     generateCompMoveInner() {
       let newBestMove;
-      scanOrder = [...DEFAULT_SCAN_ORDER];
+      GameState.scanOrder = [...DEFAULT_SCAN_ORDER];
 
       for (let depth = 2; depth <= this.depth; depth++) {
         let [bestMoveAtDepth] = this.maximize(this.board, depth, ALPHA_INIT, BETA_INIT);
@@ -887,7 +951,7 @@
 
         // Update scan order to prioritize best move found
         if (bestMoveAtDepth >= 0 && bestMoveAtDepth < BOARD_COLS) {
-          scanOrder = this.generateScanOrder(bestMoveAtDepth);
+          GameState.scanOrder = this.generateScanOrder(bestMoveAtDepth);
         }
       }
       return newBestMove;
@@ -896,7 +960,7 @@
     generateScanOrder(bestMove) {
       // Generate a scan order that prioritizes the best move and center columns
       const order = [bestMove];
-      const centerOrder = [3, 2, 4, 1, 5, 0, 6];
+      const centerOrder = DEFAULT_SCAN_ORDER;
 
       for (const col of centerOrder) {
         if (col !== bestMove) {
@@ -908,7 +972,7 @@
     }
 
     generateComputerDecision() {
-      if (!gameOver) {
+      if (!GameState.gameOver) {
         let aiMove = 0;
 
         // Extreme mode uses the advanced solver
@@ -950,7 +1014,7 @@
       // Use TT best move for move ordering if available
       const moveOrder = ttResult.bestMove !== null
         ? this.generateScanOrder(ttResult.bestMove)
-        : scanOrder;
+        : GameState.scanOrder;
 
       const max = [-1, MIN_SCORE];
       const origAlpha = alpha;
@@ -993,7 +1057,7 @@
 
       const moveOrder = ttResult.bestMove !== null
         ? this.generateScanOrder(ttResult.bestMove)
-        : scanOrder;
+        : GameState.scanOrder;
 
       const min = [-1, MAX_SCORE];
       const origBeta = beta;
@@ -1024,12 +1088,12 @@
 
     checkGameOver() {
       const thisScore = this.board.evaluateScore(true);
-      if (thisScore === -WIN_SCORE) {
+      if (thisScore === -this.score) {
         this.gameOverHelper("You Win!");
-      } else if (thisScore === WIN_SCORE) {
+      } else if (thisScore === this.score) {
         this.gameOverHelper("You Lose!");
       } else if (this.board.isFull()) {
-        gameOver = true;
+        GameState.gameOver = true;
         modal("Draw!", MODAL_DURATION);
       }
       document
@@ -1039,7 +1103,7 @@
 
     gameOverHelper(message) {
       document.getElementById("uiBlocker").classList.remove("block");
-      gameOver = true;
+      GameState.gameOver = true;
       modal(message, MODAL_DURATION);
       sleep(ANIM_WIN_HIGHLIGHT_DELAY).then(() => {
         this.winnersColorChange();
@@ -1063,7 +1127,7 @@
   // UI FUNCTIONS
   // ============================================================================
   function hoverOverColumnHighLight(e) {
-    if (!gameOver && !animationMode) {
+    if (!GameState.gameOver && !GameState.animationMode) {
       const col = Number(e.target.id.substring(3));
       document.getElementById("fc" + col).classList.add("bounce");
       for (let y = BOARD_ROWS - 1; y >= 0; y--) {
@@ -1089,8 +1153,8 @@
   }
 
   const start = () => {
-    if (!gameStarted) {
-      gameStarted = true;
+    if (!GameState.gameStarted) {
+      GameState.gameStarted = true;
       document.getElementById("difficulty").disabled = true;
       window.Game = new Game(
         Array.from(document.getElementById("difficulty").options).find(
@@ -1114,6 +1178,9 @@
   }
 
   function modalOpen(message) {
+    // Prevent duplicate modals
+    if (document.getElementById("modal-box")) return;
+
     const modalBox = document.createElement("div");
     modalBox.id = "modal-box";
     const innerModalBox = document.createElement("div");
@@ -1138,6 +1205,9 @@
   }
 
   function modal(message, duration) {
+    // Prevent duplicate modals
+    modalClose();
+
     const modalBox = document.createElement("div");
     modalBox.id = "modal-box";
     const innerModalBox = document.createElement("div");
