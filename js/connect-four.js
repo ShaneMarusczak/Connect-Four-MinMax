@@ -34,6 +34,51 @@
   // Column weights for position evaluation (center columns are more valuable)
   const COLUMN_WEIGHTS = [1, 2, 3, 4, 3, 2, 1];
 
+  // Maximum search depth for killer moves table
+  const MAX_KILLER_DEPTH = 50;
+
+  // ============================================================================
+  // KILLER MOVES TABLE
+  // ============================================================================
+  class KillerMoves {
+    constructor() {
+      // Store 2 killer moves per depth
+      this.moves = new Array(MAX_KILLER_DEPTH);
+      this.clear();
+    }
+
+    clear() {
+      for (let i = 0; i < MAX_KILLER_DEPTH; i++) {
+        this.moves[i] = [null, null];
+      }
+    }
+
+    store(depth, move) {
+      if (depth >= MAX_KILLER_DEPTH || move === null || move < 0) return;
+
+      const slot = this.moves[depth];
+
+      // Don't store duplicates
+      if (slot[0] === move) return;
+
+      // Shift: second slot gets first, first gets new move
+      slot[1] = slot[0];
+      slot[0] = move;
+    }
+
+    get(depth) {
+      if (depth >= MAX_KILLER_DEPTH) return [];
+
+      const slot = this.moves[depth];
+      const result = [];
+
+      if (slot[0] !== null) result.push(slot[0]);
+      if (slot[1] !== null && slot[1] !== slot[0]) result.push(slot[1]);
+
+      return result;
+    }
+  }
+
   // ============================================================================
   // GAME STATE (encapsulated)
   // ============================================================================
@@ -359,6 +404,7 @@
     constructor() {
       this.engine = new BitboardEngine();
       this.transTable = new Map();
+      this.killerMoves = new KillerMoves();
       this.nodeCount = 0;
 
       // Opening book for perfect play
@@ -373,6 +419,7 @@
     reset() {
       this.engine.reset();
       this.transTable.clear();
+      this.killerMoves.clear();
       this.nodeCount = 0;
     }
 
@@ -524,7 +571,7 @@
       }
 
       // Get non-losing moves
-      const moves = this.engine.getOrderedMoves();
+      let moves = this.engine.getOrderedMoves();
 
       if (moves.length === 0) {
         return -(43 - this.engine.moves) / 2; // We will lose
@@ -545,7 +592,14 @@
         return this.evaluate();
       }
 
+      // Reorder moves based on killer moves
+      const killers = this.killerMoves.get(depth);
+      if (killers.length > 0) {
+        moves = this.reorderWithKillers(moves, killers);
+      }
+
       let bestScore = -WIN_SCORE;
+      let bestCol = -1;
       const origAlpha = alpha;
 
       for (const { col, move } of moves) {
@@ -565,6 +619,7 @@
 
         if (score > bestScore) {
           bestScore = score;
+          bestCol = col;
         }
 
         if (score > alpha) {
@@ -572,7 +627,9 @@
         }
 
         if (alpha >= beta) {
-          break; // Beta cutoff
+          // Store killer move on cutoff
+          this.killerMoves.store(depth, bestCol);
+          break;
         }
       }
 
@@ -584,6 +641,23 @@
       this.transTable.set(key, { score: bestScore, depth, flag });
 
       return bestScore;
+    }
+
+    reorderWithKillers(moves, killers) {
+      // Move killer moves to the front
+      const killerSet = new Set(killers);
+      const killerMoves = [];
+      const otherMoves = [];
+
+      for (const move of moves) {
+        if (killerSet.has(move.col)) {
+          killerMoves.push(move);
+        } else {
+          otherMoves.push(move);
+        }
+      }
+
+      return [...killerMoves, ...otherMoves];
     }
 
     evaluate() {
@@ -624,6 +698,7 @@
   // ============================================================================
   const transpositionTable = new TranspositionTable();
   const extremeSolver = new ExtremeSolver();
+  const killerMoves = new KillerMoves();
 
   // ============================================================================
   // BOARD CLASS
@@ -795,9 +870,10 @@
       this.turnsTaken = 0;
       this.board = undefined;
 
-      // Clear transposition table for new game
+      // Clear transposition table and killer moves for new game
       transpositionTable.clear();
       extremeSolver.transTable.clear();
+      killerMoves.clear();
 
       this.init();
     }
@@ -957,13 +1033,33 @@
       return newBestMove;
     }
 
-    generateScanOrder(bestMove) {
-      // Generate a scan order that prioritizes the best move and center columns
-      const order = [bestMove];
-      const centerOrder = DEFAULT_SCAN_ORDER;
+    generateScanOrder(bestMove, depth = 0) {
+      // Generate a scan order that prioritizes:
+      // 1. Best move from TT (if any)
+      // 2. Killer moves at this depth
+      // 3. Center-first default order
 
-      for (const col of centerOrder) {
-        if (col !== bestMove) {
+      const order = [];
+      const added = new Set();
+
+      // 1. TT best move first
+      if (bestMove !== null && bestMove >= 0 && bestMove < BOARD_COLS) {
+        order.push(bestMove);
+        added.add(bestMove);
+      }
+
+      // 2. Killer moves
+      const killers = killerMoves.get(depth);
+      for (const killer of killers) {
+        if (!added.has(killer) && killer >= 0 && killer < BOARD_COLS) {
+          order.push(killer);
+          added.add(killer);
+        }
+      }
+
+      // 3. Remaining columns in center-first order
+      for (const col of DEFAULT_SCAN_ORDER) {
+        if (!added.has(col)) {
           order.push(col);
         }
       }
@@ -1011,10 +1107,8 @@
         return [ttResult.bestMove !== null ? ttResult.bestMove : -1, ttResult.score];
       }
 
-      // Use TT best move for move ordering if available
-      const moveOrder = ttResult.bestMove !== null
-        ? this.generateScanOrder(ttResult.bestMove)
-        : GameState.scanOrder;
+      // Use TT best move + killer moves for move ordering
+      const moveOrder = this.generateScanOrder(ttResult.bestMove, depth);
 
       const max = [-1, MIN_SCORE];
       const origAlpha = alpha;
@@ -1031,7 +1125,9 @@
             alpha = max[1];
           }
           if (alpha >= beta) {
-            // Store lower bound
+            // Store killer move on beta cutoff
+            killerMoves.store(depth, max[0]);
+            // Store lower bound in TT
             transpositionTable.store(board.gameBoardArray, depth, max[1], 'lower', max[0]);
             return max;
           }
@@ -1055,9 +1151,8 @@
         return [ttResult.bestMove !== null ? ttResult.bestMove : -1, ttResult.score];
       }
 
-      const moveOrder = ttResult.bestMove !== null
-        ? this.generateScanOrder(ttResult.bestMove)
-        : GameState.scanOrder;
+      // Use TT best move + killer moves for move ordering
+      const moveOrder = this.generateScanOrder(ttResult.bestMove, depth);
 
       const min = [-1, MAX_SCORE];
       const origBeta = beta;
@@ -1074,6 +1169,9 @@
             beta = min[1];
           }
           if (alpha >= beta) {
+            // Store killer move on alpha cutoff
+            killerMoves.store(depth, min[0]);
+            // Store upper bound in TT
             transpositionTable.store(board.gameBoardArray, depth, min[1], 'upper', min[0]);
             return min;
           }
